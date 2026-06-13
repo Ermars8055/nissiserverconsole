@@ -1,14 +1,7 @@
 import psutil
 import platform
-import os
 from datetime import datetime
 from fastapi import APIRouter, Depends
-
-# Configure psutil to read from the host filesystem mount if available
-if os.path.exists("/hostfs/proc"):
-    psutil.PROCFS_PATH = "/hostfs/proc"
-if os.path.exists("/hostfs/sys"):
-    psutil.SYSFS_PATH = "/hostfs/sys"
 
 router = APIRouter()
 
@@ -31,11 +24,10 @@ async def get_system_overview():
     # Memory
     svmem = psutil.virtual_memory()
     
-    # Disk (check hostfs root first, fallback to container root)
-    target_disk = "/hostfs" if os.path.exists("/hostfs") else "/"
+    # Disk
     disk_usage = None
     try:
-        partition_usage = psutil.disk_usage(target_disk)
+        partition_usage = psutil.disk_usage('/')
         disk_usage = {
             "total": get_size(partition_usage.total),
             "used": get_size(partition_usage.used),
