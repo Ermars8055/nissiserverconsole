@@ -8,14 +8,19 @@ fi
 
 echo "Setting up native Nissi Server Console Backend..."
 
-# Install required system packages
+# Add PPA for stable Python versions
 apt-get update
-apt-get install -y python3 python3-venv python3-dev gcc cups-client
+apt-get install -y software-properties-common
+add-apt-repository -y ppa:deadsnakes/ppa
+apt-get update
 
-# Create a virtual environment if it doesn't exist
+# Install Python 3.11 specifically to avoid bleeding-edge 3.14 issues
+apt-get install -y python3.11 python3.11-venv python3.11-dev gcc cups-client
+
+# Create a virtual environment if it doesn't exist using Python 3.11
 cd backend
 if [ ! -d "venv" ]; then
-    python3 -m venv venv
+    python3.11 -m venv venv
 fi
 
 # Activate virtual environment and install dependencies
