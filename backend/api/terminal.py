@@ -2,8 +2,10 @@ import os
 import pty
 import json
 import asyncio
+import struct
+import fcntl
+import termios
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-import ptyprocess
 
 router = APIRouter()
 
@@ -11,48 +13,56 @@ router = APIRouter()
 async def terminal_websocket(websocket: WebSocket):
     await websocket.accept()
     
-    # Spawn a new bash shell
+    # Spawn a new bash shell using native os.forkpty()
     try:
-        # Spawn native bash shell on the host
-        child = ptyprocess.PtyProcessUnicode.spawn(['/bin/bash', '-i'])
-
+        pid, fd = os.forkpty()
+        if pid == 0:
+            # Child process: Replace the current process with bash
+            os.execv('/bin/bash', ['/bin/bash', '-i'])
     except Exception as e:
         await websocket.close(code=1011, reason=f"Could not spawn shell: {str(e)}")
         return
 
+    # Background loop to read data coming out of the bash shell
     async def read_from_pty():
+        loop = asyncio.get_running_loop()
         try:
             while True:
-                # Need to read asynchronously, but ptyprocess.read is synchronous
-                # So we run it in an executor
-                loop = asyncio.get_running_loop()
-                data = await loop.run_in_executor(None, child.read, 1024)
+                # Read asynchronously from the master file descriptor
+                data = await loop.run_in_executor(None, os.read, fd, 1024)
                 if not data:
                     break
-                await websocket.send_text(json.dumps({"type": "output", "data": data}))
-        except EOFError:
+                text = data.decode('utf-8', errors='replace')
+                await websocket.send_text(json.dumps({"type": "output", "data": text}))
+        except OSError:
+            # Expected when the pty is closed or child process dies (Input/output error)
             pass
         except Exception as e:
             print(f"PTY read error: {e}")
         finally:
-            child.terminate(force=True)
+            try:
+                os.kill(pid, 9)
+            except OSError:
+                pass
 
     read_task = asyncio.create_task(read_from_pty())
 
     try:
+        # Loop to listen for incoming messages from the frontend WebSocket
         while True:
-            # Receive text from WebSocket (Frontend sends JSON)
             message = await websocket.receive_text()
             data = json.loads(message)
             
             if data["type"] == "input":
-                # Write to PTY
-                child.write(data["data"])
+                # Write directly into the master file descriptor
+                os.write(fd, data["data"].encode('utf-8'))
+                
             elif data["type"] == "resize":
-                # Resize PTY
+                # Resize the real PTY using ioctl
                 cols = data.get("cols", 80)
                 rows = data.get("rows", 24)
-                child.setwinsize(rows, cols)
+                winsize = struct.pack("HHHH", rows, cols, 0, 0)
+                fcntl.ioctl(fd, termios.TIOCSWINSZ, winsize)
                 
     except WebSocketDisconnect:
         pass
@@ -60,4 +70,12 @@ async def terminal_websocket(websocket: WebSocket):
         print(f"WebSocket error: {e}")
     finally:
         read_task.cancel()
-        child.terminate(force=True)
+        try:
+            os.kill(pid, 9)
+            os.waitpid(pid, 0)
+        except OSError:
+            pass
+        try:
+            os.close(fd)
+        except OSError:
+            pass
