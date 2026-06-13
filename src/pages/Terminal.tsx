@@ -13,10 +13,7 @@ export default function Terminal() {
     { id: "session-1", name: "Main Server", active: true },
   ]);
 
-  const savedConnections = [
-    { id: 1, name: "Production DB", host: "10.0.0.45", user: "postgres" },
-    { id: 2, name: "Web Server 01", host: "10.0.0.12", user: "ubuntu" },
-  ];
+  const [savedConnections] = useState<any[]>([]);
 
   const terminalRef = useRef<HTMLDivElement>(null);
   const xtermRef = useRef<XTerm | null>(null);
