@@ -19,6 +19,7 @@ export default function PrinterManagement() {
   const [isAddPrinterOpen, setIsAddPrinterOpen] = useState(false);
   const [detectedDevices, setDetectedDevices] = useState<any[]>([]);
   const [newPrinterName, setNewPrinterName] = useState("");
+  const [newPrinterDriver, setNewPrinterDriver] = useState("everywhere");
   const [selectedDeviceUri, setSelectedDeviceUri] = useState("");
   const [isScanning, setIsScanning] = useState(false);
 
@@ -85,7 +86,7 @@ export default function PrinterManagement() {
     try {
       await fetchApi("/api/printer/add", {
         method: "POST",
-        body: JSON.stringify({ name: newPrinterName, uri: selectedDeviceUri, driver: "everywhere" })
+        body: JSON.stringify({ name: newPrinterName, uri: selectedDeviceUri, driver: newPrinterDriver })
       });
       setIsAddPrinterOpen(false);
       fetchStatus();
@@ -203,11 +204,20 @@ export default function PrinterManagement() {
                   placeholder="e.g. Office_HP_LaserJet" 
                 />
               </div>
+              <div className="space-y-2 pt-2">
+                <Label htmlFor="driver">Driver / PPD String</Label>
+                <Input 
+                  id="driver" 
+                  value={newPrinterDriver} 
+                  onChange={(e) => setNewPrinterDriver(e.target.value)} 
+                  placeholder="e.g. everywhere or foo2zjs:0/ppd/..." 
+                />
+              </div>
             </div>
             
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsAddPrinterOpen(false)}>Cancel</Button>
-              <Button onClick={handleAddPrinter} disabled={!selectedDeviceUri || !newPrinterName}>Install Printer</Button>
+              <Button onClick={handleAddPrinter} disabled={!selectedDeviceUri || !newPrinterName || !newPrinterDriver}>Install Printer</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
