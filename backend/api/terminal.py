@@ -13,12 +13,16 @@ router = APIRouter()
 async def terminal_websocket(websocket: WebSocket):
     await websocket.accept()
     
-    # Spawn a new bash shell using native os.forkpty()
     try:
         pid, fd = os.forkpty()
         if pid == 0:
-            # Child process: Replace the current process with bash
-            os.execv('/bin/bash', ['/bin/bash', '-i'])
+            # Child process: Set up a true interactive terminal environment
+            env = os.environ.copy()
+            env['TERM'] = 'xterm-256color'
+            env['HOME'] = '/root'
+            env['USER'] = 'root'
+            # Launch bash as a login shell so it loads all profiles and initializes readline
+            os.execve('/bin/bash', ['/bin/bash', '-l', '-i'], env)
     except Exception as e:
         await websocket.close(code=1011, reason=f"Could not spawn shell: {str(e)}")
         return
