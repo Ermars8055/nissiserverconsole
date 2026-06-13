@@ -18,10 +18,7 @@ services:
     build:
       context: .
     container_name: server_admin_frontend
-    ports:
-      - "80:80"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    network_mode: "host"
     restart: unless-stopped
 
 volumes:
