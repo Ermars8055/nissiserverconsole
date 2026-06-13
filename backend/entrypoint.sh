@@ -5,6 +5,9 @@ echo "Running migrations / creating tables..."
 python -c "
 import asyncio
 from database import Base, engine
+from models.user import User
+from models.audit import AuditLog
+
 async def init():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
