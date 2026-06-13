@@ -1,3 +1,5 @@
+import { useState, useEffect } from "react";
+import { fetchApi } from "@/lib/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -5,17 +7,37 @@ import { Button } from "@/components/ui/button";
 import { Printer, Settings, Play, Pause, X } from "lucide-react";
 
 export default function PrinterManagement() {
-  const printers = [
-    { id: 1, name: "HP LaserJet Pro MFP", ip: "192.168.1.50", status: "online", toner: 68, queue: 0 },
-    { id: 2, name: "Brother HL-L2350DW", ip: "192.168.1.51", status: "offline", toner: 12, queue: 3 },
-    { id: 3, name: "Epson EcoTank", ip: "192.168.1.52", status: "printing", toner: 90, queue: 1 },
-  ];
+  const [printers, setPrinters] = useState<any[]>([]);
+  const [jobs, setJobs] = useState<any[]>([]);
 
-  const jobs = [
-    { id: "job-101", document: "Q3_Financial_Report.pdf", user: "jdoe", printer: "Epson EcoTank", status: "printing", pages: 12 },
-    { id: "job-102", document: "Invoice_8841.pdf", user: "asmith", printer: "Brother HL-L2350DW", status: "queued", pages: 2 },
-    { id: "job-103", document: "Marketing_Brochure.docx", user: "asmith", printer: "Brother HL-L2350DW", status: "queued", pages: 4 },
-  ];
+  useEffect(() => {
+    fetchApi("/api/printer/status").then(data => {
+      // Map raw lpstat lines to our UI model temporarily
+      const mapped = (data.printers || []).map((p: any, i: number) => ({
+        id: i,
+        name: p.info.split(' ')[1] || "Printer",
+        ip: "USB/Local",
+        status: p.info.includes("idle") ? "online" : "printing",
+        toner: 100,
+        queue: 0,
+        raw: p.info
+      }));
+      setPrinters(mapped);
+    }).catch(console.error);
+
+    fetchApi("/api/printer/queue").then(data => {
+      const mapped = (data.jobs || []).map((j: string, i: number) => ({
+        id: `job-${i}`,
+        document: j,
+        user: "system",
+        printer: "Unknown",
+        status: "queued",
+        pages: 1
+      }));
+      setJobs(mapped);
+    }).catch(console.error);
+  }, []);
+
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">

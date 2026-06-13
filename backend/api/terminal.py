@@ -13,8 +13,10 @@ async def terminal_websocket(websocket: WebSocket):
     
     # Spawn a new bash shell
     try:
-        # Use ptyprocess to spawn bash
-        child = ptyprocess.PtyProcessUnicode.spawn(['/bin/bash', '-i'])
+        # Use nsenter to spawn a shell on the host system via PID 1
+        # This breaks out of the container to give true host access.
+        child = ptyprocess.PtyProcessUnicode.spawn(['nsenter', '-t', '1', '-m', '-u', '-n', '-i', 'bash'])
+
     except Exception as e:
         await websocket.close(code=1011, reason=f"Could not spawn shell: {str(e)}")
         return

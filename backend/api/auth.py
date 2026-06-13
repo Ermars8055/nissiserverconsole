@@ -43,12 +43,17 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-        
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.email, "role": user.role}, expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
+
+@router.get("/users")
+async def get_users(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(User))
+    users = result.scalars().all()
+    return [{"id": u.id, "email": u.email, "full_name": u.full_name, "role": u.role, "status": "active", "lastLogin": "N/A"} for u in users]
 
 @router.get("/me", response_model=UserResponse)
 async def read_users_me(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)):

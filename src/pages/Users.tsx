@@ -1,15 +1,17 @@
+import { useState, useEffect } from "react";
+import { fetchApi } from "@/lib/api";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Shield, ShieldAlert, ShieldCheck, MoreHorizontal, UserPlus } from "lucide-react";
 
 export default function Users() {
-  const users = [
-    { id: 1, name: "Admin User", email: "admin@system.local", role: "Super Admin", status: "active", lastLogin: "10 mins ago" },
-    { id: 2, name: "Jane Doe", email: "jane.doe@system.local", role: "Developer", status: "active", lastLogin: "2 hours ago" },
-    { id: 3, name: "John Smith", email: "john.smith@system.local", role: "Viewer", status: "inactive", lastLogin: "3 days ago" },
-    { id: 4, name: "DevOps Bot", email: "bot@system.local", role: "API Access", status: "active", lastLogin: "Just now" },
-  ];
+  const [users, setUsers] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchApi("/auth/users").then(setUsers).catch(console.error);
+  }, []);
+
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">

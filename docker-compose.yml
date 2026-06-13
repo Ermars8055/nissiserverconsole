@@ -13,6 +13,13 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
+  backend:
+    image: my-backend-image
+    volumes:
+      - /:/hostfs:ro
+    pid: "host"
+    privileged: true
+    restart: unless-stopped
 
 volumes:
   postgres_data:

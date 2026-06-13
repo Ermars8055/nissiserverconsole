@@ -30,6 +30,7 @@ services:
       - /:/hostfs:ro
     # For accurate psutil monitoring of the host:
     pid: "host"
+    privileged: true
     depends_on:
       - db
     restart: unless-stopped

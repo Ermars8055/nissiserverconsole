@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { mockActivityFeed } from "@/lib/mock-data";
 import { fetchApi } from "@/lib/api";
 import { Activity, HardDrive, Server, Users } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
@@ -8,6 +7,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 export default function Dashboard() {
   const [metrics, setMetrics] = useState<any>(null);
   const [cpuHistory, setCpuHistory] = useState<any[]>([]);
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchMetrics = async () => {
@@ -15,13 +15,21 @@ export default function Dashboard() {
       const data = await fetchApi("/api/system/overview");
       setMetrics(data);
       
+      const auditData = await fetchApi("/api/audit/?limit=5");
+      const mappedAudit = auditData.map((log: any) => ({
+        id: log.id,
+        timestamp: new Date(log.timestamp).toLocaleString(),
+        level: log.action.includes("Error") || log.action.includes("Failed") ? "ERROR" : "INFO",
+        message: log.target ? `${log.action} on ${log.target}` : log.action
+      }));
+      setRecentActivity(mappedAudit);
+
       // Update CPU history for the chart
       const now = new Date();
       const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
       
       setCpuHistory(prev => {
         const newHistory = [...prev, { time: timeStr, usage: data.cpu.usage_percent }];
-        // Keep last 20 data points
         if (newHistory.length > 20) {
           return newHistory.slice(newHistory.length - 20);
         }
@@ -154,16 +162,16 @@ export default function Dashboard() {
                <div className="mt-8">
                   <h4 className="text-sm font-medium mb-3 text-muted-foreground">Recent Audit Log</h4>
                   <div className="space-y-4">
-                    {mockActivityFeed.slice(0, 3).map((item) => (
+                    {recentActivity.map((item: any) => (
                       <div key={item.id} className="flex items-center">
                         <div className={`mt-0.5 h-2 w-2 rounded-full ${
-                          item.type === 'error' ? 'bg-destructive' :
-                          item.type === 'success' ? 'bg-green-500' :
-                          item.type === 'warning' ? 'bg-yellow-500' : 'bg-primary'
+                          item.level === 'ERROR' ? 'bg-destructive' :
+                          item.level === 'INFO' ? 'bg-green-500' :
+                          item.level === 'WARN' ? 'bg-yellow-500' : 'bg-primary'
                         }`} />
                         <div className="ml-4 space-y-1">
-                          <p className="text-sm font-medium leading-none">{item.action}</p>
-                          <p className="text-[10px] text-muted-foreground">{item.time}</p>
+                          <p className="text-sm font-medium leading-none">{item.message}</p>
+                          <p className="text-[10px] text-muted-foreground">{item.timestamp}</p>
                         </div>
                       </div>
                     ))}

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { fetchApi } from "@/lib/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -8,17 +9,23 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 export default function Logs() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [logs, setLogs] = useState<any[]>([]);
 
-  const mockLogs = [
-    { id: 1, timestamp: "2026-06-13 10:45:12", level: "ERROR", source: "postgres-db", message: "Connection timeout waiting for client" },
-    { id: 2, timestamp: "2026-06-13 10:44:50", level: "WARN", source: "nginx-proxy", message: "High latency detected from backend server" },
-    { id: 3, timestamp: "2026-06-13 10:42:11", level: "INFO", source: "system", message: "User 'admin' successfully authenticated via SSH" },
-    { id: 4, timestamp: "2026-06-13 10:40:05", level: "INFO", source: "docker-daemon", message: "Container 'redis-cache' stopped successfully" },
-    { id: 5, timestamp: "2026-06-13 10:35:22", level: "ERROR", source: "app-backend", message: "Failed to connect to redis cache on port 6379" },
-    { id: 6, timestamp: "2026-06-13 10:30:00", level: "INFO", source: "cron", message: "Daily backup job completed in 45s" },
-  ];
+  useEffect(() => {
+    fetchApi("/api/audit/").then(data => {
+      // Data arrives as [{id, user_email, action, target, timestamp}]
+      const mapped = data.map((log: any) => ({
+        id: log.id,
+        timestamp: new Date(log.timestamp).toLocaleString(),
+        level: log.action.includes("Error") || log.action.includes("Failed") ? "ERROR" : "INFO",
+        source: log.user_email,
+        message: log.target ? `${log.action} on ${log.target}` : log.action
+      }));
+      setLogs(mapped);
+    }).catch(console.error);
+  }, []);
 
-  const filteredLogs = mockLogs.filter(log => 
+  const filteredLogs = logs.filter(log => 
     log.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
     log.source.toLowerCase().includes(searchTerm.toLowerCase())
   );
