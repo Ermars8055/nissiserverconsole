@@ -29,7 +29,7 @@ export default function PrinterManagement() {
       const mapped = (data.jobs || []).map((j: string, i: number) => ({
         id: `job-${i}`,
         document: j,
-        user: j.split(' ')[1] if len(j.split(' ')) > 1 else "root",
+        user: j.split(' ').length > 1 ? j.split(' ')[1] : "root",
         printer: "Unknown",
         status: "queued",
         pages: 1
