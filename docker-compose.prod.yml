@@ -18,11 +18,15 @@ services:
     container_name: server_admin_backend
     environment:
       POSTGRES_SERVER: db
+      SERVER_ADMIN_FS_ROOT: /app/files
     volumes:
       # Mount the docker socket to allow managing host containers
       - /var/run/docker.sock:/var/run/docker.sock
+      # Mount CUPS socket to allow host printing from inside container
+      - /var/run/cups/cups.sock:/var/run/cups/cups.sock
+      # Mount persistent file storage directory
+      - ./nissi_files:/app/files
       # Optional: Mount root filesystem read-only for host psutil monitoring
-      # (Note: psutil inside docker still might have some limitations without host networking/PID space)
       - /:/hostfs:ro
     # For accurate psutil monitoring of the host:
     pid: "host"

@@ -3,46 +3,44 @@ import subprocess
 
 router = APIRouter()
 
-# CUPS interaction stub
-# In a real environment, you would use python-cups or subprocess to lpstat/lp/cancel commands
-
 @router.get("/status")
 async def get_printer_status():
     try:
-        # Example: using lpstat -p
-        # result = subprocess.run(['lpstat', '-p'], capture_output=True, text=True)
-        # return {"status": result.stdout}
-        
-        return {
-            "printers": [
-                {"name": "HP_M1005", "status": "idle", "message": "Ready to print"},
-            ]
-        }
+        # lpstat -p returns printer statuses
+        result = subprocess.run(['lpstat', '-p'], capture_output=True, text=True)
+        if result.returncode != 0:
+            return {"status": "Error", "message": result.stderr}
+            
+        printers = []
+        for line in result.stdout.strip().split('\n'):
+            if line:
+                printers.append({"info": line})
+                
+        return {"printers": printers, "raw": result.stdout}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get printer status: {str(e)}")
 
 @router.get("/queue")
 async def get_printer_queue():
     try:
-        # Example: using lpstat -o
-        # result = subprocess.run(['lpstat', '-o'], capture_output=True, text=True)
-        return {"jobs": []}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.post("/test")
-async def print_test_page():
-    try:
-        # Example: sending a test file to HP_M1005
-        # subprocess.run(['lp', '-d', 'HP_M1005', '/usr/share/cups/data/testprint'])
-        return {"status": "success", "message": "Test page sent to printer."}
+        # lpstat -o returns queued jobs
+        result = subprocess.run(['lpstat', '-o'], capture_output=True, text=True)
+        return {"jobs": result.stdout.strip().split('\n') if result.stdout.strip() else []}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/print")
-async def print_document(file_path: str):
+async def print_document(file_path: str, printer_name: str = None):
     try:
-        # subprocess.run(['lp', '-d', 'HP_M1005', file_path])
-        return {"status": "success", "message": f"Document {file_path} queued for printing."}
+        cmd = ['lp']
+        if printer_name:
+            cmd.extend(['-d', printer_name])
+        cmd.append(file_path)
+        
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            raise Exception(result.stderr)
+            
+        return {"status": "success", "message": result.stdout.strip()}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

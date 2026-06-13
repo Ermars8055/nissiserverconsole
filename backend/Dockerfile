@@ -6,9 +6,9 @@ ENV PYTHONUNBUFFERED 1
 
 WORKDIR /app
 
-# Install system dependencies (needed for psutil and building wheels)
+# Install system dependencies (needed for psutil, building wheels, and CUPS printing)
 RUN apt-get update \
-    && apt-get install -y gcc python3-dev \
+    && apt-get install -y gcc python3-dev cups-client \
     && apt-get clean
 
 # Install dependencies
