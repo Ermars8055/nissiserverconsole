@@ -1,5 +1,7 @@
 from fastapi import APIRouter, HTTPException
 import subprocess
+import os
+from .files import BASE_DIR, safe_join
 
 router = APIRouter()
 
@@ -30,8 +32,12 @@ async def get_printer_queue():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/print")
-async def print_document(file_path: str, printer_name: str = None):
+async def print_document(filename: str, printer_name: str = None):
     try:
+        file_path = safe_join(BASE_DIR, filename)
+        if not os.path.isfile(file_path):
+            raise HTTPException(status_code=404, detail="File not found in storage")
+            
         cmd = ['lp']
         if printer_name:
             cmd.extend(['-d', printer_name])

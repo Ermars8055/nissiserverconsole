@@ -6,8 +6,8 @@ from fastapi.responses import FileResponse
 
 router = APIRouter()
 
-# Restrict base directory to prevent arbitrary file system access
-BASE_DIR = os.path.abspath(os.environ.get("SERVER_ADMIN_FS_ROOT", "/tmp/server_admin_files"))
+# Use a persistent storage directory in the backend folder
+BASE_DIR = os.path.abspath(os.environ.get("SERVER_ADMIN_FS_ROOT", os.path.join(os.path.dirname(os.path.dirname(__file__)), "storage")))
 
 if not os.path.exists(BASE_DIR):
     os.makedirs(BASE_DIR, exist_ok=True)
