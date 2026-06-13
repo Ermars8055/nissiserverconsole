@@ -1,13 +1,16 @@
 import psutil
 import platform
+import os
 from datetime import datetime
 from fastapi import APIRouter, Depends
 
-router = APIRouter()
+# Configure psutil to read from the host filesystem mount if available
+if os.path.exists("/hostfs/proc"):
+    psutil.PROCFS_PATH = "/hostfs/proc"
+if os.path.exists("/hostfs/sys"):
+    psutil.SYSFS_PATH = "/hostfs/sys"
 
-# Optional: Add authentication dependency here if needed
-# from api.auth import oauth2_scheme
-# @router.get("/overview", dependencies=[Depends(oauth2_scheme)])
+router = APIRouter()
 
 def get_size(bytes, suffix="B"):
     factor = 1024
@@ -28,21 +31,19 @@ async def get_system_overview():
     # Memory
     svmem = psutil.virtual_memory()
     
-    # Disk
-    partitions = psutil.disk_partitions()
+    # Disk (check hostfs root first, fallback to container root)
+    target_disk = "/hostfs" if os.path.exists("/hostfs") else "/"
     disk_usage = None
-    for partition in partitions:
-        if partition.mountpoint == '/':
-            try:
-                partition_usage = psutil.disk_usage(partition.mountpoint)
-                disk_usage = {
-                    "total": get_size(partition_usage.total),
-                    "used": get_size(partition_usage.used),
-                    "free": get_size(partition_usage.free),
-                    "percentage": partition_usage.percent
-                }
-            except PermissionError:
-                continue
+    try:
+        partition_usage = psutil.disk_usage(target_disk)
+        disk_usage = {
+            "total": get_size(partition_usage.total),
+            "used": get_size(partition_usage.used),
+            "free": get_size(partition_usage.free),
+            "percentage": partition_usage.percent
+        }
+    except Exception:
+        pass
 
     return {
         "system": {
