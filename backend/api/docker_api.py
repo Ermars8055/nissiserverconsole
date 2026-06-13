@@ -1,18 +1,22 @@
 import docker
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from typing import Optional
+import traceback
 
 router = APIRouter()
 
+docker_init_error = None
 try:
     client = docker.from_env()
+    client.ping()
 except Exception as e:
     # Handle environment without Docker
     client = None
+    docker_init_error = str(e)
 
 def get_docker_client():
     if not client:
-        raise HTTPException(status_code=500, detail="Docker daemon is not accessible.")
+        raise HTTPException(status_code=500, detail=f"Docker daemon is not accessible. Error: {docker_init_error}")
     return client
 
 @router.get("/containers")
