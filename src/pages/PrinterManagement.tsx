@@ -4,7 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Printer, Settings, Play, Pause, X, Upload, File as FileIcon, Download, Trash2, Printer as PrinterIcon } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Printer, Settings, Play, Pause, X, Upload, File as FileIcon, Download, Trash2, Printer as PrinterIcon, RefreshCw } from "lucide-react";
 
 export default function PrinterManagement() {
   const [printers, setPrinters] = useState<any[]>([]);
@@ -12,9 +16,14 @@ export default function PrinterManagement() {
   const [storedFiles, setStoredFiles] = useState<any[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
+  const [isAddPrinterOpen, setIsAddPrinterOpen] = useState(false);
+  const [detectedDevices, setDetectedDevices] = useState<any[]>([]);
+  const [newPrinterName, setNewPrinterName] = useState("");
+  const [selectedDeviceUri, setSelectedDeviceUri] = useState("");
+  const [isScanning, setIsScanning] = useState(false);
+
+  const fetchStatus = () => {
     fetchApi("/api/printer/status").then(data => {
-      // Map raw lpstat lines to our UI model temporarily
       const mapped = (data.printers || []).map((p: any, i: number) => ({
         id: i,
         name: p.info.split(' ')[1] || "Printer",
@@ -26,6 +35,10 @@ export default function PrinterManagement() {
       }));
       setPrinters(mapped);
     }).catch(console.error);
+  };
+
+  useEffect(() => {
+    fetchStatus();
 
     fetchApi("/api/printer/queue").then(data => {
       const mapped = (data.jobs || []).map((j: string, i: number) => ({
@@ -44,6 +57,42 @@ export default function PrinterManagement() {
 
   const fetchFiles = () => {
     fetchApi("/api/files/list").then(setStoredFiles).catch(console.error);
+  };
+
+  const scanDevices = async () => {
+    setIsScanning(true);
+    try {
+      const data = await fetchApi("/api/printer/devices");
+      setDetectedDevices(data.devices || []);
+      if (data.devices && data.devices.length > 0) {
+        setSelectedDeviceUri(data.devices[0].uri);
+        setNewPrinterName(data.devices[0].name.replace(/[^a-zA-Z0-9_-]/g, ''));
+      }
+    } catch (err) {
+      console.error("Failed to fetch devices:", err);
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isAddPrinterOpen) {
+      scanDevices();
+    }
+  }, [isAddPrinterOpen]);
+
+  const handleAddPrinter = async () => {
+    try {
+      await fetchApi("/api/printer/add", {
+        method: "POST",
+        body: JSON.stringify({ name: newPrinterName, uri: selectedDeviceUri, driver: "everywhere" })
+      });
+      setIsAddPrinterOpen(false);
+      fetchStatus();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to add printer: " + err);
+    }
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,10 +151,66 @@ export default function PrinterManagement() {
           <h2 className="text-3xl font-bold tracking-tight">Printer Management</h2>
           <p className="text-muted-foreground">Monitor and manage network printers and print queues.</p>
         </div>
-        <Button>
-          <Printer className="mr-2 h-4 w-4" />
-          Add Printer
-        </Button>
+        
+        <Dialog open={isAddPrinterOpen} onOpenChange={setIsAddPrinterOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Printer className="mr-2 h-4 w-4" />
+              Add Printer
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add Hardware Printer</DialogTitle>
+              <DialogDescription>
+                Scan for USB or network printers and register them with the server.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              <div className="flex justify-between items-center">
+                <Label>Detected Devices</Label>
+                <Button variant="ghost" size="sm" onClick={scanDevices} disabled={isScanning}>
+                  <RefreshCw className={`h-4 w-4 mr-2 ${isScanning ? 'animate-spin' : ''}`} />
+                  Scan
+                </Button>
+              </div>
+              
+              <Select value={selectedDeviceUri} onValueChange={(val) => {
+                setSelectedDeviceUri(val);
+                const dev = detectedDevices.find(d => d.uri === val);
+                if (dev) setNewPrinterName(dev.name.replace(/[^a-zA-Z0-9_-]/g, ''));
+              }}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a connected printer..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {detectedDevices.length === 0 && <SelectItem value="none" disabled>No devices found</SelectItem>}
+                  {detectedDevices.map((dev: any) => (
+                    <SelectItem key={dev.uri} value={dev.uri}>
+                      {dev.name} ({dev.type})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <div className="space-y-2 pt-2">
+                <Label htmlFor="name">Printer Display Name</Label>
+                <Input 
+                  id="name" 
+                  value={newPrinterName} 
+                  onChange={(e) => setNewPrinterName(e.target.value)} 
+                  placeholder="e.g. Office_HP_LaserJet" 
+                />
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsAddPrinterOpen(false)}>Cancel</Button>
+              <Button onClick={handleAddPrinter} disabled={!selectedDeviceUri || !newPrinterName}>Install Printer</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 import subprocess
 import os
 from .files import BASE_DIR, safe_join
@@ -48,5 +49,38 @@ async def print_document(filename: str, printer_name: str = None):
             raise Exception(result.stderr)
             
         return {"status": "success", "message": result.stdout.strip()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/devices")
+async def get_printer_devices():
+    try:
+        result = subprocess.run(['lpinfo', '-v'], capture_output=True, text=True)
+        devices = []
+        for line in result.stdout.strip().split('\n'):
+            if line:
+                parts = line.split(' ', 1)
+                if len(parts) == 2:
+                    conn_type = parts[0]
+                    uri = parts[1]
+                    name = uri.split('://')[-1].split('?')[0].replace('%20', ' ')
+                    devices.append({"type": conn_type, "uri": uri, "name": name})
+        return {"devices": devices}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to scan devices: {str(e)}")
+
+class AddPrinterRequest(BaseModel):
+    name: str
+    uri: str
+    driver: str = "everywhere"
+
+@router.post("/add")
+async def add_printer(req: AddPrinterRequest):
+    try:
+        cmd = ['lpadmin', '-p', req.name.replace(' ', '_'), '-E', '-v', req.uri, '-m', req.driver]
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            raise Exception(result.stderr)
+        return {"status": "success", "message": f"Printer {req.name} added successfully."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
