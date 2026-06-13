@@ -35,7 +35,7 @@ export default function Settings() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="admin-email">Admin Email Contact</Label>
-                <Input id="admin-email" defaultValue="admin@system.local" type="email" />
+                <Input id="admin-email" placeholder="admin@example.com" type="email" />
               </div>
             </CardContent>
           </Card>
