@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Play, Square, RotateCw, Terminal as TerminalIcon } from "lucide-react";
+import { ArrowLeft, Play, Square, RotateCw } from "lucide-react";
 
 export default function ContainerDetails() {
   const { id } = useParams();

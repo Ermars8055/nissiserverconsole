@@ -9,7 +9,7 @@ import "@xterm/xterm/css/xterm.css";
 
 export default function Terminal() {
   const [activeTab, setActiveTab] = useState("session-1");
-  const [sessions, setSessions] = useState([
+  const [sessions] = useState([
     { id: "session-1", name: "Main Server", active: true },
   ]);
 

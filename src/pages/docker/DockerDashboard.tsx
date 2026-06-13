@@ -34,7 +34,7 @@ export default function DockerDashboard() {
     fetchContainers();
   }, []);
 
-  const handleAction = async (id: str, action: str) => {
+  const handleAction = async (id: string, action: string) => {
     try {
       await fetchApi(`/api/docker/${action}/${id}`, { method: 'POST' });
       fetchContainers();
