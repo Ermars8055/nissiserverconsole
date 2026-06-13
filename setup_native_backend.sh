@@ -46,6 +46,4 @@ asyncio.run(init())
 echo "Ensuring default admin exists..."
 python create_admin.py
 
-echo "Starting backend natively on port 8000..."
-# Run the backend natively
-uvicorn main:app --host 0.0.0.0 --port 8000
+echo "Setup complete! Run ./install_service.sh to start the backend in the background."
