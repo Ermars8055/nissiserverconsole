@@ -48,6 +48,15 @@ export default function Settings() {
     }
   };
 
+  const testSosConfig = async () => {
+    try {
+      await fetchApi('/api/sos/test', { method: 'POST' });
+      alert('Test email dispatched! Check your inbox.');
+    } catch (err) {
+      alert('Failed to send test email. Check your SMTP password.');
+    }
+  };
+
   const copyToClipboard = (text: string, isManager: boolean) => {
     navigator.clipboard.writeText(text);
     if (isManager) {
@@ -203,9 +212,14 @@ export default function Settings() {
                   />
                   <p className="text-xs text-muted-foreground">If any node crosses this temperature, the SOS will fire.</p>
                 </div>
-                <Button onClick={saveSosConfig} className="w-full mt-2" variant="destructive">
-                  Save Alarm Configuration
-                </Button>
+                <div className="flex gap-2 mt-4">
+                  <Button onClick={saveSosConfig} className="flex-1" variant="default">
+                    Save Alarm Configuration
+                  </Button>
+                  <Button onClick={testSosConfig} className="flex-1" variant="destructive">
+                    Test Alarm
+                  </Button>
+                </div>
               </>
             )}
           </CardContent>

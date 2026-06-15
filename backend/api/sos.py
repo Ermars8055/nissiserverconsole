@@ -37,3 +37,27 @@ async def save_config(config: SOSConfig):
     with open(CONFIG_FILE, "w") as f:
         json.dump(data, f)
     return {"status": "success"}
+
+import smtplib
+from email.message import EmailMessage
+
+@router.post("/test")
+async def test_email():
+    config = load_config()
+    if not config.get("enabled") or not config.get("email") or not config.get("smtp_password"):
+        raise HTTPException(status_code=400, detail="SOS Config is missing or disabled.")
+        
+    try:
+        msg = EmailMessage()
+        msg.set_content("This is a test of the Nissi Server Thermal SOS System. If you are receiving this, your SMTP configuration is perfect!\n\nIf a real fire occurs, you will receive an alert with the exact temperature and PC name.")
+        msg['Subject'] = "🟢 TEST: Nissi Server SOS System"
+        msg['From'] = config['email']
+        msg['To'] = config['email']
+
+        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+        server.login(config['email'], config['smtp_password'])
+        server.send_message(msg)
+        server.quit()
+        return {"status": "success", "message": "Test email sent successfully!"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
