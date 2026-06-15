@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException, BackgroundTasks
 from typing import Optional
 import traceback
 import requests
+from pydantic import BaseModel
 
 router = APIRouter()
 
@@ -229,5 +230,85 @@ async def swarm_services():
         return result
     except docker.errors.APIError as e:
         raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+@router.get("/networks")
+async def docker_networks():
+    d_client = get_docker_client()
+    if not d_client:
+        raise HTTPException(status_code=503, detail="Docker daemon not accessible.")
+    try:
+        networks = d_client.networks.list()
+        result = []
+        for n in networks:
+            result.append({
+                "id": n.short_id,
+                "name": n.name,
+                "driver": n.attrs.get('Driver'),
+                "scope": n.attrs.get('Scope'),
+                "internal": n.attrs.get('Internal', False),
+                "attachable": n.attrs.get('Attachable', False)
+            })
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/networks/{network_id}")
+async def remove_network(network_id: str):
+    d_client = get_docker_client()
+    if not d_client:
+        raise HTTPException(status_code=503, detail="Docker daemon not accessible.")
+    try:
+        network = d_client.networks.get(network_id)
+        network.remove()
+        return {"status": "success", "message": f"Network {network_id} removed."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/images")
+async def docker_images():
+    d_client = get_docker_client()
+    if not d_client:
+        raise HTTPException(status_code=503, detail="Docker daemon not accessible.")
+    try:
+        images = d_client.images.list()
+        result = []
+        for i in images:
+            tags = i.tags if i.tags else ["<none>:<none>"]
+            result.append({
+                "id": i.short_id,
+                "tags": tags,
+                "size": i.attrs.get('Size', 0),
+                "created": i.attrs.get('Created')
+            })
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+class PullImageRequest(BaseModel):
+    image_name: str
+
+@router.post("/images/pull")
+async def pull_image(request: PullImageRequest):
+    d_client = get_docker_client()
+    if not d_client:
+        raise HTTPException(status_code=503, detail="Docker daemon not accessible.")
+    try:
+        # Run pull in background as it takes time, or we just block. For simplicity, we block.
+        # Docker API pull is somewhat long. We should ideally return a status and do it in background.
+        # But we will let it block for now, or just use background task if necessary.
+        image = d_client.images.pull(request.image_name)
+        return {"status": "success", "message": f"Image {request.image_name} pulled successfully."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/images/{image_id}")
+async def remove_image(image_id: str):
+    d_client = get_docker_client()
+    if not d_client:
+        raise HTTPException(status_code=503, detail="Docker daemon not accessible.")
+    try:
+        d_client.images.remove(image_id, force=True)
+        return {"status": "success", "message": f"Image {image_id} removed."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

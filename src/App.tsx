@@ -10,6 +10,8 @@ import PrinterManagement from "./pages/PrinterManagement";
 import Terminal from "./pages/Terminal";
 import Logs from "./pages/Logs";
 import Users from "./pages/Users";
+import Networks from "./pages/docker/Networks";
+import Images from "./pages/docker/Images";
 import Storage from "./pages/Storage";
 import Settings from "./pages/Settings";
 import Login from "./pages/Login";
@@ -47,8 +49,8 @@ function App() {
               <Route path="/swarm" element={<SwarmDashboard />} />
               <Route path="/containers/:id" element={<ContainerDetails />} />
               <Route path="/containers" element={<PlaceholderPage title="Containers" />} />
-              <Route path="/images" element={<PlaceholderPage title="Images" />} />
-              <Route path="/networks" element={<PlaceholderPage title="Networks" />} />
+              <Route path="/images" element={<Images />} />
+              <Route path="/networks" element={<Networks />} />
               <Route path="/storage" element={<Storage />} />
               <Route path="/printers" element={<PrinterManagement />} />
               <Route path="/terminal" element={<Terminal />} />
