@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { fetchApi } from '../../utils/api';
+import { useEffect, useState } from 'react';
+import { fetchApi } from '../../lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Server, Activity, HardDrive, Cpu, AlertCircle, RefreshCw } from 'lucide-react';
