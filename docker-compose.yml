@@ -21,5 +21,21 @@ services:
     privileged: true
     restart: unless-stopped
 
+  gitea:
+    image: gitea/gitea:latest
+    container_name: server_admin_gitea
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+      - GITEA__database__DB_TYPE=sqlite3
+    restart: unless-stopped
+    volumes:
+      - /mnt/swarm_storage/gitea:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "3030:3000"
+      - "222:22"
+
 volumes:
   postgres_data:

@@ -16,6 +16,7 @@ import Databases from './pages/docker/Databases';
 import Storage from "./pages/Storage";
 import Settings from "./pages/Settings";
 import Report from './pages/Report';
+import GitServer from "./pages/GitServer";
 import Login from "./pages/Login";
 import PlaceholderPage from "./pages/PlaceholderPage";
 
@@ -61,6 +62,7 @@ function App() {
               <Route path="/users" element={<Users />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/report" element={<Report />} />
+              <Route path="/git-server" element={<GitServer />} />
             </Route>
           </Routes>
         </BrowserRouter>

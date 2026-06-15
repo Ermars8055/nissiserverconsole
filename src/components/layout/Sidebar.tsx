@@ -8,7 +8,8 @@ import {
   FileText,
   Users,
   Settings,
-  BarChart
+  BarChart,
+  GitBranch
 } from "lucide-react";
 
 export function Sidebar() {
@@ -22,6 +23,7 @@ export function Sidebar() {
     { name: "Printer Management", href: "/printers", icon: FileText },
     { name: "Terminal", href: "/terminal", icon: TerminalIcon },
     { name: "Logs", href: "/logs", icon: FileText },
+    { name: "Source Code Vault", href: "/git-server", icon: GitBranch },
     { name: "Users", href: "/users", icon: Users },
     { name: "Global Report", href: "/report", icon: BarChart },
     { name: "Settings", href: "/settings", icon: Settings },
