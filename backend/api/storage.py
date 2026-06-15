@@ -63,3 +63,31 @@ async def delete_file(filename: str):
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
     raise HTTPException(status_code=404, detail="File not found")
+
+from fastapi.responses import FileResponse
+import tempfile
+import asyncio
+
+@router.get("/backup")
+async def download_backup():
+    if not os.path.exists(STORAGE_DIR) or not os.listdir(STORAGE_DIR):
+        raise HTTPException(status_code=404, detail="Vault is empty, nothing to backup.")
+        
+    try:
+        # Create a temporary directory to store the zip file
+        temp_dir = tempfile.gettempdir()
+        zip_path = os.path.join(temp_dir, "swarm_vault_backup")
+        
+        # Run shutil.make_archive in a background thread to avoid blocking the API
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, shutil.make_archive, zip_path, 'zip', STORAGE_DIR)
+        
+        final_zip = f"{zip_path}.zip"
+        
+        return FileResponse(
+            path=final_zip, 
+            filename=f"nissi_swarm_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip",
+            media_type="application/zip"
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create backup: {str(e)}")

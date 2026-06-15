@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetchApi } from "@/lib/api";
-import { Activity, HardDrive, Server, Users } from "lucide-react";
+import { Activity, HardDrive, Server, Users, Power } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 export default function Dashboard() {
@@ -9,6 +9,18 @@ export default function Dashboard() {
   const [cpuHistory, setCpuHistory] = useState<any[]>([]);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [nodes, setNodes] = useState<any[]>([]);
+
+  const handleShutdown = async (ip: string, hostname: string) => {
+    if (confirm(`CRITICAL WARNING: Are you sure you want to completely power off ${hostname} (${ip})?`)) {
+      try {
+        await fetchApi(`/api/power/shutdown/${encodeURIComponent(ip)}`, { method: 'POST' });
+        alert(`Shutdown signal sent to ${hostname}`);
+      } catch (err) {
+        alert(`Failed to shutdown ${hostname}`);
+      }
+    }
+  };
 
   const fetchMetrics = async () => {
     try {
@@ -19,14 +31,15 @@ export default function Dashboard() {
       try {
         const info = await fetchApi('/api/docker/swarm/info');
         if (info.swarm_active && info.is_manager) {
-          const nodes = await fetchApi('/api/docker/swarm/nodes');
-          if (nodes && nodes.length > 0) {
+          const swarmNodes = await fetchApi('/api/docker/swarm/nodes');
+          if (swarmNodes && swarmNodes.length > 0) {
+            setNodes(swarmNodes);
             let totalMemoryBytes = 0;
             let totalCpus = 0;
             let activeNodesCount = 0;
             let sumCpuPercent = 0;
 
-            nodes.forEach((node: any) => {
+            swarmNodes.forEach((node: any) => {
               totalMemoryBytes += (node.memory_bytes || 0);
               totalCpus += (node.cpus || 0);
               
@@ -163,6 +176,34 @@ export default function Dashboard() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        {nodes.length > 0 && (
+          <Card className="col-span-7 border-destructive/20 border-2">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-red-500 flex items-center gap-2"><Power className="h-5 w-5"/> Emergency Power Controls</CardTitle>
+              <CardDescription>Issue physical shutdown commands to Swarm nodes to prevent combustion.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {nodes.map(n => (
+                  <div key={n.id} className="flex items-center justify-between p-3 border rounded-md">
+                    <div>
+                      <div className="font-bold text-sm">{n.hostname}</div>
+                      <div className="text-xs text-muted-foreground">{n.ip || 'Local'} ({n.role})</div>
+                    </div>
+                    <Button 
+                      variant="destructive" 
+                      size="sm"
+                      onClick={() => handleShutdown(n.ip || '127.0.0.1', n.hostname)}
+                    >
+                      KILL POWER
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <Card className="col-span-4">
           <CardHeader>
             <CardTitle>CPU Activity</CardTitle>

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { fetchApi } from '@/lib/api';
-import { File, Folder, Trash2, Upload, FileText, Image as ImageIcon, Video, Music, Archive, RefreshCw } from 'lucide-react';
+import { File, Folder, Trash2, Upload, FileText, Image as ImageIcon, Video, Music, Archive, RefreshCw, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface FileItem {
@@ -108,6 +108,14 @@ export default function Storage() {
         <div className="flex space-x-2">
           <Button variant="outline" size="icon" onClick={loadFiles}>
             <RefreshCw className="h-4 w-4" />
+          </Button>
+          <Button 
+            variant="outline" 
+            className="bg-blue-500/10 text-blue-500 hover:bg-blue-500/20"
+            onClick={() => window.location.href = '/api/storage/backup'}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Backup Vault
           </Button>
           <input 
             type="file" 

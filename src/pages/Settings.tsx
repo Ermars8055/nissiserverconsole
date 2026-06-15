@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { fetchApi } from '@/lib/api';
-import { Copy, Check, Server, Network } from 'lucide-react';
+import { Copy, Check, Server, Network, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface SwarmTokens {
   worker: string | null;
@@ -14,6 +15,12 @@ export default function Settings() {
   const [tokens, setTokens] = useState<SwarmTokens | null>(null);
   const [copiedWorker, setCopiedWorker] = useState(false);
   const [copiedManager, setCopiedManager] = useState(false);
+  const [sosConfig, setSosConfig] = useState({
+    enabled: false,
+    email: '',
+    smtp_password: '',
+    threshold: 90
+  });
 
   useEffect(() => {
     const loadTokens = async () => {
@@ -25,7 +32,21 @@ export default function Settings() {
       }
     };
     loadTokens();
+    fetchApi('/api/sos/config').then(data => setSosConfig(data)).catch(() => {});
   }, []);
+
+  const saveSosConfig = async () => {
+    try {
+      await fetchApi('/api/sos/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sosConfig)
+      });
+      alert('Thermal SOS configuration saved!');
+    } catch (err) {
+      alert('Failed to save SOS config.');
+    }
+  };
 
   const copyToClipboard = (text: string, isManager: boolean) => {
     navigator.clipboard.writeText(text);
@@ -125,6 +146,68 @@ export default function Settings() {
                 <span className="text-muted-foreground">v1.2.0</span>
               </div>
             </div>
+          </CardContent>
+        </Card>
+        <Card className="border-red-500/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-red-500">
+              <Flame className="h-5 w-5" />
+              Thermal SOS Fire Alarm
+            </CardTitle>
+            <CardDescription>Configure emergency email alerts if any PC exceeds safe temperatures due to a fire or A/C failure.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="sos-enable" className="font-bold">Enable Thermal Watchdog</Label>
+              <input 
+                id="sos-enable" 
+                type="checkbox" 
+                className="h-4 w-4"
+                checked={sosConfig.enabled}
+                onChange={e => setSosConfig({...sosConfig, enabled: e.target.checked})}
+              />
+            </div>
+
+            {sosConfig.enabled && (
+              <>
+                <div className="grid gap-2">
+                  <Label htmlFor="sos-email">Sender & Recipient Email</Label>
+                  <Input 
+                    id="sos-email" 
+                    placeholder="yourname@gmail.com" 
+                    value={sosConfig.email}
+                    onChange={e => setSosConfig({...sosConfig, email: e.target.value})}
+                  />
+                  <p className="text-xs text-muted-foreground">The email address to send the SOS from, and receive the SOS to.</p>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="sos-pass">SMTP / App Password</Label>
+                  <Input 
+                    id="sos-pass" 
+                    type="password" 
+                    placeholder="16-character App Password" 
+                    value={sosConfig.smtp_password}
+                    onChange={e => setSosConfig({...sosConfig, smtp_password: e.target.value})}
+                  />
+                  <p className="text-xs text-muted-foreground">For Gmail, use a 16-character App Password, not your real password.</p>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="sos-thresh">Trigger Threshold (°C)</Label>
+                  <Input 
+                    id="sos-thresh" 
+                    type="number" 
+                    min="50" 
+                    max="110" 
+                    value={sosConfig.threshold}
+                    onChange={e => setSosConfig({...sosConfig, threshold: parseInt(e.target.value) || 90})}
+                  />
+                  <p className="text-xs text-muted-foreground">If any node crosses this temperature, the SOS will fire.</p>
+                </div>
+                <Button onClick={saveSosConfig} className="w-full mt-2" variant="destructive">
+                  Save Alarm Configuration
+                </Button>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
