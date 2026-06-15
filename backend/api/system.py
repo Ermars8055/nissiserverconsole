@@ -92,3 +92,38 @@ async def get_network():
         "bytes_sent": net_io.bytes_sent,
         "bytes_recv": net_io.bytes_recv
     }
+
+@router.get("/report_data")
+async def generate_system_report():
+    import json
+    import os
+    
+    # 1. Gather SOS Config
+    sos_config = {}
+    if os.path.exists("sos_config.json"):
+        with open("sos_config.json", "r") as f:
+            sos_config = json.load(f)
+            
+    # 2. Gather Node Status via Docker SDK
+    from backend.api.docker_api import get_docker_client
+    nodes = []
+    try:
+        client = get_docker_client()
+        if client:
+            nodes_data = client.nodes.list()
+            for n in nodes_data:
+                nodes.append({
+                    "id": n.id,
+                    "hostname": n.attrs.get("Description", {}).get("Hostname"),
+                    "role": n.attrs.get("Spec", {}).get("Role"),
+                    "state": n.attrs.get("Status", {}).get("State"),
+                    "ip": n.attrs.get("Status", {}).get("Addr")
+                })
+    except Exception:
+        pass
+        
+    return {
+        "report_time": __import__('time').strftime('%Y-%m-%d %H:%M:%S'),
+        "sos_config": sos_config,
+        "nodes": nodes
+    }

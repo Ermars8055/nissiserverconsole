@@ -10,21 +10,21 @@ import {
   FileText,
   Users,
   Settings,
+  BarChart
 } from "lucide-react";
 
 export function Sidebar() {
   const navItems = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
-    { name: "Docker", href: "/docker", icon: Box },
-    { name: "Swarm Cluster", href: "/swarm", icon: Network },
-    { name: "Containers", href: "/containers", icon: Box },
-    { name: "Images", href: "/images", icon: HardDrive },
-    { name: "Networks", href: "/networks", icon: Network },
-    { name: "Storage", href: "/storage", icon: Database },
-    { name: "Printer Management", href: "/printers", icon: Printer },
+    { name: "Swarm Cluster", href: "/docker/swarm", icon: Network },
+    { name: "Images", href: "/docker/images", icon: HardDrive },
+    { name: "Networks", href: "/docker/networks", icon: Network },
+    { name: "Database Control Center", href: "/databases", icon: Database },
+    { name: "Storage", href: "/files", icon: Database },
     { name: "Terminal", href: "/terminal", icon: TerminalIcon },
     { name: "Logs", href: "/logs", icon: FileText },
     { name: "Users", href: "/users", icon: Users },
+    { name: "Global Report", href: "/report", icon: BarChart },
     { name: "Settings", href: "/settings", icon: Settings },
   ];
 

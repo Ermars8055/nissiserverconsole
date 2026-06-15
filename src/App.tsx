@@ -12,8 +12,10 @@ import Logs from "./pages/Logs";
 import Users from "./pages/Users";
 import Networks from "./pages/docker/Networks";
 import Images from "./pages/docker/Images";
+import Databases from './pages/docker/Databases';
 import Storage from "./pages/Storage";
 import Settings from "./pages/Settings";
+import Report from './pages/Report';
 import Login from "./pages/Login";
 import PlaceholderPage from "./pages/PlaceholderPage";
 
@@ -51,12 +53,14 @@ function App() {
               <Route path="/containers" element={<PlaceholderPage title="Containers" />} />
               <Route path="/images" element={<Images />} />
               <Route path="/networks" element={<Networks />} />
+              <Route path="/databases" element={<Databases />} />
               <Route path="/storage" element={<Storage />} />
               <Route path="/printers" element={<PrinterManagement />} />
               <Route path="/terminal" element={<Terminal />} />
               <Route path="/logs" element={<Logs />} />
               <Route path="/users" element={<Users />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/report" element={<Report />} />
             </Route>
           </Routes>
         </BrowserRouter>

@@ -312,3 +312,80 @@ async def remove_image(image_id: str):
         return {"status": "success", "message": f"Image {image_id} removed."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+import subprocess
+import time
+import os
+
+@router.get("/databases")
+async def get_databases():
+    d_client = get_docker_client()
+    if not d_client:
+        raise HTTPException(status_code=503, detail="Docker daemon not accessible.")
+    try:
+        containers = d_client.containers.list(all=True)
+        db_containers = []
+        for c in containers:
+            img = c.image.tags[0].lower() if c.image.tags else ""
+            if "postgres" in img or "mysql" in img or "mariadb" in img or "mongo" in img:
+                env_vars = c.attrs.get('Config', {}).get('Env', [])
+                db_type = "postgres" if "postgres" in img else "mysql" if ("mysql" in img or "mariadb" in img) else "mongo"
+                db_containers.append({
+                    "id": c.short_id,
+                    "name": c.name,
+                    "image": img,
+                    "status": c.status,
+                    "type": db_type,
+                    "has_env": len(env_vars) > 0
+                })
+        return db_containers
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/databases/{container_id}/backup")
+async def backup_database(container_id: str):
+    d_client = get_docker_client()
+    if not d_client:
+        raise HTTPException(status_code=503, detail="Docker daemon not accessible.")
+    
+    backup_dir = "/mnt/swarm_storage/db_backups"
+    os.makedirs(backup_dir, exist_ok=True)
+    
+    try:
+        container = d_client.containers.get(container_id)
+        img = container.image.tags[0].lower() if container.image.tags else ""
+        env_vars = container.attrs.get('Config', {}).get('Env', [])
+        
+        timestamp = int(time.time())
+        backup_file = f"{backup_dir}/{container.name}_backup_{timestamp}.sql"
+        
+        if "postgres" in img:
+            user = "postgres"
+            for e in env_vars:
+                if e.startswith("POSTGRES_USER="):
+                    user = e.split("=")[1]
+            # Execute pg_dump directly inside the container via docker exec
+            # We don't use SDK exec_run because piping output safely is easier with subprocess
+            cmd = f"docker exec {container.id} pg_dump -U {user} -c > {backup_file}"
+            subprocess.run(cmd, shell=True, check=True)
+            return {"status": "success", "message": f"Postgres Backup saved to {backup_file}"}
+            
+        elif "mysql" in img or "mariadb" in img:
+            root_pass = ""
+            for e in env_vars:
+                if e.startswith("MYSQL_ROOT_PASSWORD="):
+                    root_pass = e.split("=")[1]
+            
+            if not root_pass:
+                raise HTTPException(status_code=400, detail="MYSQL_ROOT_PASSWORD not found in container environment.")
+                
+            cmd = f"docker exec {container.id} mysqldump -u root -p{root_pass} --all-databases > {backup_file}"
+            subprocess.run(cmd, shell=True, check=True)
+            return {"status": "success", "message": f"MySQL Backup saved to {backup_file}"}
+        else:
+            raise HTTPException(status_code=400, detail="Unsupported database type for auto-backup.")
+            
+    except subprocess.CalledProcessError as e:
+        raise HTTPException(status_code=500, detail=f"Backup command failed: {e}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
