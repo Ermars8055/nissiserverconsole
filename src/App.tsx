@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { AppLayout } from "./components/layout/AppLayout";
 import Dashboard from "./pages/Dashboard";
 import DockerDashboard from "./pages/docker/DockerDashboard";
+import SwarmDashboard from "./pages/docker/SwarmDashboard";
 import ContainerDetails from "./pages/docker/ContainerDetails";
 import PrinterManagement from "./pages/PrinterManagement";
 import Terminal from "./pages/Terminal";
@@ -42,6 +43,7 @@ function App() {
             }>
               <Route path="/" element={<Dashboard />} />
               <Route path="/docker" element={<DockerDashboard />} />
+              <Route path="/swarm" element={<SwarmDashboard />} />
               <Route path="/containers/:id" element={<ContainerDetails />} />
               <Route path="/containers" element={<PlaceholderPage title="Containers" />} />
               <Route path="/images" element={<PlaceholderPage title="Images" />} />

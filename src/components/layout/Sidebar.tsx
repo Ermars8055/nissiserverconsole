@@ -16,6 +16,7 @@ export function Sidebar() {
   const navItems = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
     { name: "Docker", href: "/docker", icon: Box },
+    { name: "Swarm Cluster", href: "/swarm", icon: Network },
     { name: "Containers", href: "/containers", icon: Box },
     { name: "Images", href: "/images", icon: HardDrive },
     { name: "Networks", href: "/networks", icon: Network },
