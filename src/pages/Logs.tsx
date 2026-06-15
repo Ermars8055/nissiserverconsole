@@ -73,7 +73,7 @@ export default function Logs() {
           <TabsTrigger value="docker" className="flex-1">Docker Containers</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="audit" className="flex-1 flex flex-col min-h-0 mt-4 m-0 border-none outline-none">
+        <TabsContent value="audit" className="flex-1 flex-col min-h-0 mt-4 m-0 border-none outline-none data-[state=active]:flex">
           <Card className="flex-1 flex flex-col min-h-0">
             <div className="p-4 border-b flex items-center gap-4 shrink-0">
               <div className="relative flex-1">
@@ -127,7 +127,7 @@ export default function Logs() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="docker" className="flex-1 flex min-h-0 mt-4 m-0 gap-4 outline-none border-none">
+        <TabsContent value="docker" className="flex-1 min-h-0 mt-4 m-0 gap-4 outline-none border-none data-[state=active]:flex">
           <Card className="w-64 shrink-0 flex flex-col min-h-0">
             <div className="p-3 border-b font-semibold flex items-center justify-between">
               Active Containers
