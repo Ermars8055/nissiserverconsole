@@ -10,19 +10,24 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 router = APIRouter()
 
 @router.websocket("/ws")
-async def terminal_websocket(websocket: WebSocket):
+async def terminal_websocket(websocket: WebSocket, target_ip: str = None, ssh_user: str = None):
     await websocket.accept()
     
     try:
         pid, fd = os.forkpty()
         if pid == 0:
-            # Child process: Set up a true interactive terminal environment
             env = os.environ.copy()
             env['TERM'] = 'xterm-256color'
-            env['HOME'] = '/root'
-            env['USER'] = 'root'
-            # Launch bash as a login shell so it loads all profiles and initializes readline
-            os.execve('/bin/bash', ['/bin/bash', '-l', '-i'], env)
+            
+            if target_ip and ssh_user and target_ip != "local" and target_ip != "127.0.0.1":
+                # Launch SSH client
+                # Using StrictHostKeyChecking=no makes it seamless for internal swarm nodes
+                os.execve('/usr/bin/ssh', ['/usr/bin/ssh', '-o', 'StrictHostKeyChecking=no', f"{ssh_user}@{target_ip}"], env)
+            else:
+                # Local bash shell
+                env['HOME'] = '/root'
+                env['USER'] = 'root'
+                os.execve('/bin/bash', ['/bin/bash', '-l', '-i'], env)
     except Exception as e:
         await websocket.close(code=1011, reason=f"Could not spawn shell: {str(e)}")
         return
