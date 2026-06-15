@@ -108,21 +108,20 @@ async def generate_system_report():
             except Exception:
                 sos_config = {"enabled": False}
                 
-        # 2. Gather Node Status via Docker SDK
-        from .docker_api import get_docker_client
+        # 2. Gather Node Status via Docker SDK directly
         nodes = []
         try:
-            client = get_docker_client()
-            if client:
-                nodes_data = client.nodes.list()
-                for n in nodes_data:
-                    nodes.append({
-                        "id": n.id,
-                        "hostname": n.attrs.get("Description", {}).get("Hostname"),
-                        "role": n.attrs.get("Spec", {}).get("Role"),
-                        "state": n.attrs.get("Status", {}).get("State"),
-                        "ip": n.attrs.get("Status", {}).get("Addr")
-                    })
+            import docker
+            client = docker.DockerClient(base_url='unix://var/run/docker.sock')
+            nodes_data = client.nodes.list()
+            for n in nodes_data:
+                nodes.append({
+                    "id": n.id,
+                    "hostname": n.attrs.get("Description", {}).get("Hostname"),
+                    "role": n.attrs.get("Spec", {}).get("Role"),
+                    "state": n.attrs.get("Status", {}).get("State"),
+                    "ip": n.attrs.get("Status", {}).get("Addr")
+                })
         except Exception:
             pass
             

@@ -57,7 +57,7 @@ export default function PrinterManagement() {
   }, []);
 
   const fetchFiles = () => {
-    fetchApi("/api/files/list").then(setStoredFiles).catch(console.error);
+    fetchApi("/api/storage/list").then(setStoredFiles).catch(console.error);
   };
 
   const scanDevices = async () => {
@@ -105,7 +105,7 @@ export default function PrinterManagement() {
 
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("/api/files/upload", {
+      const res = await fetch("/api/storage/upload", {
         method: "POST",
         headers: token ? { "Authorization": `Bearer ${token}` } : {},
         body: formData,
@@ -120,7 +120,7 @@ export default function PrinterManagement() {
   const handleFileAction = async (filename: string, action: 'print' | 'delete' | 'download') => {
     try {
       if (action === 'delete') {
-        await fetchApi(`/api/files/delete?path=${encodeURIComponent(filename)}`, { method: 'DELETE' });
+        await fetchApi(`/api/storage/delete/${encodeURIComponent(filename)}`, { method: 'DELETE' });
         fetchFiles();
       } else if (action === 'print') {
         await fetchApi(`/api/printer/print?filename=${encodeURIComponent(filename)}`, { method: 'POST' });
