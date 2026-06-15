@@ -77,13 +77,14 @@ def send_sos_email(config, hostname, temp, ip):
         msg['From'] = config['email']
         msg['To'] = config['email']
 
-        clean_password = config['smtp_password'].replace(" ", "").replace("\xa0", "").strip()
+        api_key = config['mailjet_api_key'].replace(" ", "").replace("\xa0", "").strip()
+        secret = config['mailjet_secret'].replace(" ", "").replace("\xa0", "").strip()
 
-        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
-        server.login(config['email'], clean_password)
+        server = smtplib.SMTP_SSL('in-v3.mailjet.com', 465)
+        server.login(api_key, secret)
         server.send_message(msg)
         server.quit()
-        print(f"SOS Email dispatched for {hostname}!")
+        print(f"SOS Email dispatched for {hostname} via Mailjet!")
     except Exception as e:
         print(f"Failed to send SOS email: {e}")
 

@@ -18,7 +18,8 @@ export default function Settings() {
   const [sosConfig, setSosConfig] = useState({
     enabled: false,
     email: '',
-    smtp_password: '',
+    mailjet_api_key: '',
+    mailjet_secret: '',
     threshold: 90
   });
 
@@ -183,22 +184,31 @@ export default function Settings() {
                   <Label htmlFor="sos-email">Sender & Recipient Email</Label>
                   <Input 
                     id="sos-email" 
-                    placeholder="yourname@gmail.com" 
+                    placeholder="finaltestapp24@gmail.com" 
                     value={sosConfig.email}
                     onChange={e => setSosConfig({...sosConfig, email: e.target.value})}
                   />
-                  <p className="text-xs text-muted-foreground">The email address to send the SOS from, and receive the SOS to.</p>
+                  <p className="text-xs text-muted-foreground">The verified email address mapped in Mailjet.</p>
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="sos-pass">SMTP / App Password</Label>
+                  <Label htmlFor="sos-api">Mailjet API Key</Label>
                   <Input 
-                    id="sos-pass" 
-                    type="password" 
-                    placeholder="16-character App Password" 
-                    value={sosConfig.smtp_password}
-                    onChange={e => setSosConfig({...sosConfig, smtp_password: e.target.value})}
+                    id="sos-api" 
+                    type="text" 
+                    placeholder="Your Mailjet Master API Key" 
+                    value={sosConfig.mailjet_api_key}
+                    onChange={e => setSosConfig({...sosConfig, mailjet_api_key: e.target.value})}
                   />
-                  <p className="text-xs text-muted-foreground">For Gmail, use a 16-character App Password, not your real password.</p>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="sos-secret">Mailjet Secret Key</Label>
+                  <Input 
+                    id="sos-secret" 
+                    type="password" 
+                    placeholder="Your Mailjet Secret Key" 
+                    value={sosConfig.mailjet_secret}
+                    onChange={e => setSosConfig({...sosConfig, mailjet_secret: e.target.value})}
+                  />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="sos-thresh">Trigger Threshold (°C)</Label>
