@@ -109,7 +109,7 @@ async def generate_system_report():
                 sos_config = {"enabled": False}
                 
         # 2. Gather Node Status via Docker SDK
-        from backend.api.docker_api import get_docker_client
+        from .docker_api import get_docker_client
         nodes = []
         try:
             client = get_docker_client()

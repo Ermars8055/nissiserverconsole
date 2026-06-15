@@ -14,11 +14,12 @@ import {
 export function Sidebar() {
   const navItems = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
-    { name: "Swarm Cluster", href: "/docker/swarm", icon: Network },
-    { name: "Images", href: "/docker/images", icon: HardDrive },
-    { name: "Networks", href: "/docker/networks", icon: Network },
-    { name: "Database Control Center", href: "/databases", icon: Database },
-    { name: "Storage", href: "/storage", icon: Database },
+    { name: "Swarm Cluster", href: "/swarm", icon: Network },
+    { name: "Images", href: "/images", icon: HardDrive },
+    { name: "Networks", href: "/networks", icon: Network },
+    { name: "Databases", href: "/databases", icon: Database },
+    { name: "Storage Vault", href: "/storage", icon: Database },
+    { name: "Printer Management", href: "/printers", icon: FileText },
     { name: "Terminal", href: "/terminal", icon: TerminalIcon },
     { name: "Logs", href: "/logs", icon: FileText },
     { name: "Users", href: "/users", icon: Users },
