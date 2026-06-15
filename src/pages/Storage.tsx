@@ -76,7 +76,7 @@ export default function Storage() {
     setUploading(true);
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:8000/api/storage/upload', {
+      const res = await fetch('/api/storage/upload', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
