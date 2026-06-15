@@ -9,7 +9,8 @@ import {
   Users,
   Settings,
   BarChart,
-  GitBranch
+  GitBranch,
+  Shield
 } from "lucide-react";
 
 export function Sidebar() {
@@ -26,6 +27,7 @@ export function Sidebar() {
     { name: "Source Code Vault", href: "/git-server", icon: GitBranch },
     { name: "Users", href: "/users", icon: Users },
     { name: "Global Report", href: "/report", icon: BarChart },
+    { name: "Advanced Firewall", href: "/security", icon: Shield },
     { name: "Settings", href: "/settings", icon: Settings },
   ];
 

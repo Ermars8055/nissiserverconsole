@@ -17,6 +17,7 @@ import Storage from "./pages/Storage";
 import Settings from "./pages/Settings";
 import Report from './pages/Report';
 import GitServer from "./pages/GitServer";
+import SecurityCenter from "./pages/SecurityCenter";
 import Login from "./pages/Login";
 import PlaceholderPage from "./pages/PlaceholderPage";
 
@@ -63,6 +64,7 @@ function App() {
               <Route path="/settings" element={<Settings />} />
               <Route path="/report" element={<Report />} />
               <Route path="/git-server" element={<GitServer />} />
+              <Route path="/security" element={<SecurityCenter />} />
             </Route>
           </Routes>
         </BrowserRouter>
