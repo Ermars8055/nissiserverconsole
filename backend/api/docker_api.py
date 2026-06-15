@@ -137,7 +137,7 @@ async def swarm_nodes():
             if ip_addr:
                 try:
                     # Ping Glances API on port 61208
-                    res = requests.get(f"http://{ip_addr}:61208/api/3/all", timeout=1.5)
+                    res = requests.get(f"http://{ip_addr}:61208/api/4/all", timeout=1.5)
                     if res.status_code == 200:
                         data = res.json()
                         hardware_stats["cpu_percent"] = data.get("cpu", {}).get("total", 0.0)
