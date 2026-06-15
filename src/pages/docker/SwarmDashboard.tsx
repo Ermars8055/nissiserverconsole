@@ -123,9 +123,10 @@ export default function SwarmDashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {nodes.map((node) => {
           const isAlive = node.state === 'ready';
-          const cpu = node.hardware.cpu_percent;
-          const mem = node.hardware.mem_percent;
-          const disk = node.hardware.disk_percent;
+          const hw = node.hardware || { cpu_percent: 0, mem_percent: 0, disk_percent: 0 };
+          const cpu = hw.cpu_percent ?? 0;
+          const mem = hw.mem_percent ?? 0;
+          const disk = hw.disk_percent ?? 0;
           const hasMetrics = cpu > 0 || mem > 0 || disk > 0;
 
           return (
