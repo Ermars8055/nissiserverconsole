@@ -1,11 +1,9 @@
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
-  Box,
   HardDrive,
   Network,
   Database,
-  Printer,
   Terminal as TerminalIcon,
   FileText,
   Users,
