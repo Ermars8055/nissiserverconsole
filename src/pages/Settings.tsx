@@ -1,155 +1,138 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Save } from "lucide-react";
+import React, { useEffect, useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { fetchApi } from '@/lib/api';
+import { Copy, Check, Server, Network } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+
+interface SwarmTokens {
+  worker: string | null;
+  manager: string | null;
+}
 
 export default function Settings() {
+  const [tokens, setTokens] = useState<SwarmTokens | null>(null);
+  const [copiedWorker, setCopiedWorker] = useState(false);
+  const [copiedManager, setCopiedManager] = useState(false);
+
+  useEffect(() => {
+    const loadTokens = async () => {
+      try {
+        const data = await fetchApi('/api/docker/swarm/tokens');
+        setTokens(data);
+      } catch (err) {
+        console.error('Failed to load tokens', err);
+      }
+    };
+    loadTokens();
+  }, []);
+
+  const copyToClipboard = (text: string, isManager: boolean) => {
+    navigator.clipboard.writeText(text);
+    if (isManager) {
+      setCopiedManager(true);
+      setTimeout(() => setCopiedManager(false), 2000);
+    } else {
+      setCopiedWorker(true);
+      setTimeout(() => setCopiedWorker(false), 2000);
+    }
+  };
+
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-6 max-w-4xl">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Settings</h2>
-        <p className="text-muted-foreground">Manage your server and application preferences.</p>
+        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+        <p className="text-muted-foreground">Manage your server console preferences and cluster keys.</p>
       </div>
 
-      <Tabs defaultValue="general" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 lg:w-[400px]">
-          <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="backups">Backups</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="general" className="mt-4 space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Server Information</CardTitle>
-              <CardDescription>Basic information about your ServerAdmin instance.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="server-name">Server Name</Label>
-                <Input id="server-name" defaultValue="Main Production Server" />
+      <div className="grid gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Network className="h-5 w-5"/> Swarm Cluster Management</CardTitle>
+            <CardDescription>
+              Use these cryptographic tokens to join new PCs to your Docker Swarm cluster. 
+              Never share these tokens publicly!
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            
+            <div className="space-y-3">
+              <div>
+                <h3 className="text-sm font-medium flex items-center gap-2">
+                  <Server className="h-4 w-4 text-blue-500" /> 
+                  Add a Worker Node
+                </h3>
+                <p className="text-xs text-muted-foreground mb-2">Workers provide CPU and RAM to run your apps, but cannot manage the cluster.</p>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="admin-email">Admin Email Contact</Label>
-                <Input id="admin-email" placeholder="admin@example.com" type="email" />
+              <div className="flex gap-2">
+                <Input 
+                  readOnly 
+                  value={tokens?.worker || "Loading..."} 
+                  className="font-mono text-xs bg-muted"
+                />
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  onClick={() => tokens?.worker && copyToClipboard(tokens.worker, false)}
+                  disabled={!tokens?.worker}
+                >
+                  {copiedWorker ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                </Button>
               </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Appearance</CardTitle>
-              <CardDescription>Customize the look and feel of the dashboard.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Dark Mode</Label>
-                  <p className="text-sm text-muted-foreground">Enable dark mode across the application.</p>
-                </div>
-                <Switch checked={true} disabled />
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Compact Tables</Label>
-                  <p className="text-sm text-muted-foreground">Use denser padding for all data tables.</p>
-                </div>
-                <Switch checked={false} />
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+            </div>
 
-        <TabsContent value="security" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Security Settings</CardTitle>
-              <CardDescription>Manage authentication and access controls.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between border-b pb-4">
-                <div className="space-y-0.5">
-                  <Label>Two-Factor Authentication (2FA)</Label>
-                  <p className="text-sm text-muted-foreground">Require 2FA for all admin accounts.</p>
-                </div>
-                <Switch checked={true} />
+            <div className="space-y-3 pt-4 border-t">
+              <div>
+                <h3 className="text-sm font-medium flex items-center gap-2">
+                  <Server className="h-4 w-4 text-purple-500" /> 
+                  Add a Manager Node
+                </h3>
+                <p className="text-xs text-muted-foreground mb-2">Managers provide High Availability and can orchestrate the entire Swarm.</p>
               </div>
-              <div className="flex items-center justify-between border-b pb-4 pt-4">
-                <div className="space-y-0.5">
-                  <Label>Session Timeout</Label>
-                  <p className="text-sm text-muted-foreground">Automatically log out users after inactivity.</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Input type="number" defaultValue="30" className="w-20" />
-                  <span className="text-sm text-muted-foreground">mins</span>
-                </div>
+              <div className="flex gap-2">
+                <Input 
+                  readOnly 
+                  value={tokens?.manager || "Loading..."} 
+                  className="font-mono text-xs bg-muted border-purple-500/30"
+                />
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  onClick={() => tokens?.manager && copyToClipboard(tokens.manager, true)}
+                  disabled={!tokens?.manager}
+                >
+                  {copiedManager ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                </Button>
               </div>
-              <div className="flex items-center justify-between pt-4">
-                <div className="space-y-0.5">
-                  <Label>SSH Key Authentication</Label>
-                  <p className="text-sm text-muted-foreground">Allow login via SSH keys instead of passwords.</p>
-                </div>
-                <Switch checked={true} />
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+            </div>
 
-        <TabsContent value="notifications" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Notification Preferences</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Email Alerts</Label>
-                  <p className="text-sm text-muted-foreground">Receive critical alerts via email.</p>
-                </div>
-                <Switch checked={true} />
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Slack Integration</Label>
-                  <p className="text-sm text-muted-foreground">Send notifications to a Slack channel.</p>
-                </div>
-                <Switch checked={false} />
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+          </CardContent>
+        </Card>
 
-        <TabsContent value="backups" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Automated Backups</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Daily Configuration Backup</Label>
-                  <p className="text-sm text-muted-foreground">Backup server configs every night at 2:00 AM.</p>
-                </div>
-                <Switch checked={true} />
+        <Card>
+          <CardHeader>
+            <CardTitle>System Preferences</CardTitle>
+            <CardDescription>Application settings.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4 text-sm">
+              <div className="flex justify-between items-center py-2 border-b">
+                <span>Theme</span>
+                <Badge variant="outline">Dark Mode</Badge>
               </div>
-              <div className="flex items-center gap-4 mt-4">
-                <Button variant="outline">Run Manual Backup</Button>
-                <Button variant="ghost" className="text-muted-foreground">View Backup History</Button>
+              <div className="flex justify-between items-center py-2 border-b">
+                <span>Console Version</span>
+                <span className="text-muted-foreground">v1.2.0</span>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-
-      <div className="flex justify-end">
-        <Button>
-          <Save className="mr-2 h-4 w-4" /> Save Changes
-        </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
+}
+
+// Temporary badge for the settings page
+function Badge({ children, variant }: { children: React.ReactNode, variant?: string }) {
+  return <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${variant === 'outline' ? 'border-border text-foreground' : 'bg-primary text-primary-foreground'}`}>{children}</span>;
 }

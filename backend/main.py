@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base
-from api import auth, system, docker_api, terminal, files, ssh, printer, audit
+from api import auth, system, docker_api, terminal, files, ssh, printer, audit, storage
 from config import settings
 
 app = FastAPI(title=settings.PROJECT_NAME)
@@ -32,6 +32,7 @@ app.include_router(files.router, prefix="/api/files", tags=["File Manager"])
 app.include_router(ssh.router, prefix="/api/ssh", tags=["SSH Management"])
 app.include_router(printer.router, prefix="/api/printer", tags=["Printer Management"])
 app.include_router(audit.router, prefix="/api/audit", tags=["Audit Logs"])
+app.include_router(storage.router, prefix="/api/storage", tags=["Storage Management"])
 
 @app.get("/")
 def read_root():

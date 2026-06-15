@@ -117,6 +117,27 @@ async def swarm_info():
     except Exception as e:
         return {"swarm_active": False, "is_manager": False, "error": str(e)}
 
+@router.get("/swarm/tokens")
+async def swarm_tokens():
+    d_client = get_docker_client()
+    if not d_client:
+        raise HTTPException(status_code=503, detail="Docker daemon not accessible.")
+    try:
+        swarm = d_client.swarm.attrs
+        tokens = swarm.get("JoinTokens", {})
+        manager_ip = "127.0.0.1" # Fallback
+        info = d_client.info()
+        node_addr = info.get('Swarm', {}).get('NodeAddr')
+        if node_addr:
+            manager_ip = node_addr
+            
+        return {
+            "worker": f"docker swarm join --token {tokens.get('Worker')} {manager_ip}:2377" if tokens.get('Worker') else None,
+            "manager": f"docker swarm join --token {tokens.get('Manager')} {manager_ip}:2377" if tokens.get('Manager') else None
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.get("/swarm/nodes")
 async def swarm_nodes():
     d_client = get_docker_client()

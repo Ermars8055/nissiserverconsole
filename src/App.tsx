@@ -10,6 +10,7 @@ import PrinterManagement from "./pages/PrinterManagement";
 import Terminal from "./pages/Terminal";
 import Logs from "./pages/Logs";
 import Users from "./pages/Users";
+import Storage from "./pages/Storage";
 import Settings from "./pages/Settings";
 import Login from "./pages/Login";
 import PlaceholderPage from "./pages/PlaceholderPage";
@@ -48,7 +49,7 @@ function App() {
               <Route path="/containers" element={<PlaceholderPage title="Containers" />} />
               <Route path="/images" element={<PlaceholderPage title="Images" />} />
               <Route path="/networks" element={<PlaceholderPage title="Networks" />} />
-              <Route path="/storage" element={<PlaceholderPage title="Storage" />} />
+              <Route path="/storage" element={<Storage />} />
               <Route path="/printers" element={<PrinterManagement />} />
               <Route path="/terminal" element={<Terminal />} />
               <Route path="/logs" element={<Logs />} />

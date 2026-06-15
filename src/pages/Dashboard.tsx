@@ -13,7 +13,57 @@ export default function Dashboard() {
   const fetchMetrics = async () => {
     try {
       const data = await fetchApi("/api/system/overview");
-      setMetrics(data);
+      let dashboardData = { ...data };
+
+      // Try to get Swarm metrics to show the whole cluster
+      try {
+        const info = await fetchApi('/api/docker/swarm/info');
+        if (info.swarm_active && info.is_manager) {
+          const nodes = await fetchApi('/api/docker/swarm/nodes');
+          if (nodes && nodes.length > 0) {
+            let totalMemoryBytes = 0;
+            let totalCpus = 0;
+            let activeNodesCount = 0;
+            let sumCpuPercent = 0;
+
+            nodes.forEach((node: any) => {
+              totalMemoryBytes += (node.memory_bytes || 0);
+              totalCpus += (node.cpus || 0);
+              
+              if (node.hardware && node.hardware.cpu_percent > 0) {
+                sumCpuPercent += node.hardware.cpu_percent;
+                activeNodesCount++;
+              }
+            });
+
+            // Convert bytes to GB string
+            const formatBytes = (bytes: number) => {
+              if (bytes === 0) return '0 B';
+              const k = 1024;
+              const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+              const i = Math.floor(Math.log(bytes) / Math.log(k));
+              return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            };
+
+            const avgCpu = activeNodesCount > 0 ? (sumCpuPercent / activeNodesCount).toFixed(1) : 0;
+
+            dashboardData.cpu = {
+              total_cores: totalCpus,
+              usage_percent: parseFloat(avgCpu as string) || dashboardData.cpu.usage_percent
+            };
+
+            dashboardData.memory = {
+              total: formatBytes(totalMemoryBytes),
+              used: "Swarm Cluster", // Hide used for now since it's hard to aggregate properly without agent
+              percentage: dashboardData.memory.percentage // Keep local percentage or calculate it if agent returns mem
+            };
+          }
+        }
+      } catch (swarmErr) {
+        // Ignore swarm errors, fallback to local stats
+      }
+
+      setMetrics(dashboardData);
       
       const auditData = await fetchApi("/api/audit/?limit=5");
       const mappedAudit = auditData.map((log: any) => ({
@@ -29,7 +79,7 @@ export default function Dashboard() {
       const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
       
       setCpuHistory(prev => {
-        const newHistory = [...prev, { time: timeStr, usage: data.cpu.usage_percent }];
+        const newHistory = [...prev, { time: timeStr, usage: dashboardData.cpu.usage_percent }];
         if (newHistory.length > 20) {
           return newHistory.slice(newHistory.length - 20);
         }
