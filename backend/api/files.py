@@ -6,8 +6,8 @@ from fastapi.responses import FileResponse
 
 router = APIRouter()
 
-# Use a persistent storage directory in the backend folder
-BASE_DIR = os.path.abspath(os.environ.get("SERVER_ADMIN_FS_ROOT", os.path.join(os.path.dirname(os.path.dirname(__file__)), "storage")))
+# Use the shared Swarm NFS storage directory
+BASE_DIR = os.path.abspath(os.environ.get("SERVER_ADMIN_FS_ROOT", "/mnt/swarm_storage"))
 
 if not os.path.exists(BASE_DIR):
     os.makedirs(BASE_DIR, exist_ok=True)
