@@ -1,7 +1,7 @@
 import psutil
 import platform
 from datetime import datetime
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, HTTPException, Depends
 
 router = APIRouter()
 
@@ -95,35 +95,43 @@ async def get_network():
 
 @router.get("/report_data")
 async def generate_system_report():
-    import json
-    import os
-    
-    # 1. Gather SOS Config
-    sos_config = {}
-    if os.path.exists("sos_config.json"):
-        with open("sos_config.json", "r") as f:
-            sos_config = json.load(f)
-            
-    # 2. Gather Node Status via Docker SDK
-    from backend.api.docker_api import get_docker_client
-    nodes = []
     try:
-        client = get_docker_client()
-        if client:
-            nodes_data = client.nodes.list()
-            for n in nodes_data:
-                nodes.append({
-                    "id": n.id,
-                    "hostname": n.attrs.get("Description", {}).get("Hostname"),
-                    "role": n.attrs.get("Spec", {}).get("Role"),
-                    "state": n.attrs.get("Status", {}).get("State"),
-                    "ip": n.attrs.get("Status", {}).get("Addr")
-                })
-    except Exception:
-        pass
+        import json
+        import os
         
-    return {
-        "report_time": __import__('time').strftime('%Y-%m-%d %H:%M:%S'),
-        "sos_config": sos_config,
-        "nodes": nodes
-    }
+        # 1. Gather SOS Config safely
+        sos_config = {}
+        if os.path.exists("sos_config.json"):
+            try:
+                with open("sos_config.json", "r") as f:
+                    sos_config = json.load(f)
+            except Exception:
+                sos_config = {"enabled": False}
+                
+        # 2. Gather Node Status via Docker SDK
+        from backend.api.docker_api import get_docker_client
+        nodes = []
+        try:
+            client = get_docker_client()
+            if client:
+                nodes_data = client.nodes.list()
+                for n in nodes_data:
+                    nodes.append({
+                        "id": n.id,
+                        "hostname": n.attrs.get("Description", {}).get("Hostname"),
+                        "role": n.attrs.get("Spec", {}).get("Role"),
+                        "state": n.attrs.get("Status", {}).get("State"),
+                        "ip": n.attrs.get("Status", {}).get("Addr")
+                    })
+        except Exception:
+            pass
+            
+        return {
+            "report_time": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            "sos_config": sos_config,
+            "nodes": nodes
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Report Generation Failed: {str(e)}")
