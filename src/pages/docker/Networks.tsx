@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { fetchApi } from "@/lib/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Network, Trash2, Globe, Server } from "lucide-react";
+import { Trash2, Globe, Server } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function Networks() {
