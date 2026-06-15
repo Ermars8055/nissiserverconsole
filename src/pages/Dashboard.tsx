@@ -189,7 +189,14 @@ export default function Dashboard() {
                   <div key={n.id} className="flex items-center justify-between p-3 border rounded-md">
                     <div>
                       <div className="font-bold text-sm">{n.hostname}</div>
-                      <div className="text-xs text-muted-foreground">{n.ip || 'Local'} ({n.role})</div>
+                      <div className="text-xs text-muted-foreground">
+                        {n.ip || 'Local'} ({n.role}) 
+                        {n.hardware?.temperature && (
+                          <span className={`ml-2 font-bold ${n.hardware.temperature > 80 ? 'text-red-500' : 'text-orange-500'}`}>
+                            {n.hardware.temperature}°C
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <Button 
                       variant="destructive" 

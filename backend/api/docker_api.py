@@ -154,7 +154,7 @@ async def swarm_nodes():
             ip_addr = status.get('Addr')
             
             # Fetch real-time hardware stats from the Glances global agent
-            hardware_stats = {"cpu_percent": 0.0, "mem_percent": 0.0, "disk_percent": 0.0}
+            hardware_stats = {"cpu_percent": 0.0, "mem_percent": 0.0, "disk_percent": 0.0, "temperature": None}
             if ip_addr:
                 try:
                     # Ping Glances API on port 61208
@@ -168,6 +168,17 @@ async def swarm_nodes():
                         if fs_list:
                             root_fs = next((f for f in fs_list if f.get("mnt_point") == "/"), fs_list[0])
                             hardware_stats["disk_percent"] = root_fs.get("percent", 0.0)
+                        
+                        # Extract the highest CPU temperature
+                        sensors = data.get("sensors", [])
+                        max_temp = 0
+                        for s in sensors:
+                            if s.get("type") == "temperature_core" or "core" in s.get("label", "").lower():
+                                val = s.get("value", 0)
+                                if val > max_temp:
+                                    max_temp = val
+                        if max_temp > 0:
+                            hardware_stats["temperature"] = max_temp
                 except:
                     pass
 
