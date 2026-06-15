@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Activity, Lock, AlertTriangle, Fingerprint, TerminalSquare } from "lucide-react";
+import { Shield, Activity, Lock, Fingerprint, TerminalSquare } from "lucide-react";
 
 export default function SecurityCenter() {
   const [status, setStatus] = useState<any>(null);
