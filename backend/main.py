@@ -77,8 +77,10 @@ def send_sos_email(config, hostname, temp, ip):
         msg['From'] = config['email']
         msg['To'] = config['email']
 
+        clean_password = config['smtp_password'].replace(" ", "").replace("\xa0", "").strip()
+
         server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
-        server.login(config['email'], config['smtp_password'])
+        server.login(config['email'], clean_password)
         server.send_message(msg)
         server.quit()
         print(f"SOS Email dispatched for {hostname}!")

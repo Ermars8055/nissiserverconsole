@@ -54,10 +54,14 @@ async def test_email():
         msg['From'] = config['email']
         msg['To'] = config['email']
 
+        # Ensure no spaces or hidden characters in the app password
+        clean_password = config['smtp_password'].replace(" ", "").replace("\xa0", "").strip()
+
         server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
-        server.login(config['email'], config['smtp_password'])
+        server.login(config['email'], clean_password)
         server.send_message(msg)
         server.quit()
         return {"status": "success", "message": "Test email sent successfully!"}
     except Exception as e:
+        print(f"SMTP Test Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
