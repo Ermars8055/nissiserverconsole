@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { fetchApi } from '@/lib/api';
-import { Copy, Check, Server, Network, Flame } from 'lucide-react';
+import { Copy, Check, Server, Network, Flame, Edit2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,6 +22,7 @@ export default function Settings() {
     mailjet_secret: '',
     threshold: 90
   });
+  const [isEditingSos, setIsEditingSos] = useState(false);
 
   useEffect(() => {
     const loadTokens = async () => {
@@ -44,6 +45,7 @@ export default function Settings() {
         body: JSON.stringify(sosConfig)
       });
       alert('Thermal SOS configuration saved!');
+      setIsEditingSos(false);
     } catch (err) {
       alert('Failed to save SOS config.');
     }
@@ -160,10 +162,17 @@ export default function Settings() {
         </Card>
         <Card className="border-red-500/20">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-red-500">
-              <Flame className="h-5 w-5" />
-              Thermal SOS Fire Alarm
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-red-500">
+                <Flame className="h-5 w-5" />
+                Thermal SOS Fire Alarm
+              </CardTitle>
+              {sosConfig.enabled && !isEditingSos && (
+                <Button variant="ghost" size="icon" onClick={() => setIsEditingSos(true)}>
+                  <Edit2 className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
             <CardDescription>Configure emergency email alerts if any PC exceeds safe temperatures due to a fire or A/C failure.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -174,62 +183,87 @@ export default function Settings() {
                 type="checkbox" 
                 className="h-4 w-4"
                 checked={sosConfig.enabled}
-                onChange={e => setSosConfig({...sosConfig, enabled: e.target.checked})}
+                onChange={e => {
+                  setSosConfig({...sosConfig, enabled: e.target.checked});
+                  if (e.target.checked) setIsEditingSos(true);
+                }}
               />
             </div>
 
             {sosConfig.enabled && (
               <>
-                <div className="grid gap-2">
-                  <Label htmlFor="sos-email">Sender & Recipient Email</Label>
-                  <Input 
-                    id="sos-email" 
-                    placeholder="finaltestapp24@gmail.com" 
-                    value={sosConfig.email}
-                    onChange={e => setSosConfig({...sosConfig, email: e.target.value})}
-                  />
-                  <p className="text-xs text-muted-foreground">The verified email address mapped in Mailjet.</p>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="sos-api">Mailjet API Key</Label>
-                  <Input 
-                    id="sos-api" 
-                    type="text" 
-                    placeholder="Your Mailjet Master API Key" 
-                    value={sosConfig.mailjet_api_key}
-                    onChange={e => setSosConfig({...sosConfig, mailjet_api_key: e.target.value})}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="sos-secret">Mailjet Secret Key</Label>
-                  <Input 
-                    id="sos-secret" 
-                    type="password" 
-                    placeholder="Your Mailjet Secret Key" 
-                    value={sosConfig.mailjet_secret}
-                    onChange={e => setSosConfig({...sosConfig, mailjet_secret: e.target.value})}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="sos-thresh">Trigger Threshold (°C)</Label>
-                  <Input 
-                    id="sos-thresh" 
-                    type="number" 
-                    min="50" 
-                    max="110" 
-                    value={sosConfig.threshold}
-                    onChange={e => setSosConfig({...sosConfig, threshold: parseInt(e.target.value) || 90})}
-                  />
-                  <p className="text-xs text-muted-foreground">If any node crosses this temperature, the SOS will fire.</p>
-                </div>
-                <div className="flex gap-2 mt-4">
-                  <Button onClick={saveSosConfig} className="flex-1" variant="default">
-                    Save Alarm Configuration
-                  </Button>
-                  <Button onClick={testSosConfig} className="flex-1" variant="destructive">
-                    Test Alarm
-                  </Button>
-                </div>
+                {isEditingSos ? (
+                  <>
+                    <div className="grid gap-2">
+                      <Label htmlFor="sos-email">Sender & Recipient Email</Label>
+                      <Input 
+                        id="sos-email" 
+                        placeholder="finaltestapp24@gmail.com" 
+                        value={sosConfig.email}
+                        onChange={e => setSosConfig({...sosConfig, email: e.target.value})}
+                      />
+                      <p className="text-xs text-muted-foreground">The verified email address mapped in Mailjet.</p>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="sos-api">Mailjet API Key</Label>
+                      <Input 
+                        id="sos-api" 
+                        type="text" 
+                        placeholder="Your Mailjet Master API Key" 
+                        value={sosConfig.mailjet_api_key}
+                        onChange={e => setSosConfig({...sosConfig, mailjet_api_key: e.target.value})}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="sos-secret">Mailjet Secret Key</Label>
+                      <Input 
+                        id="sos-secret" 
+                        type="password" 
+                        placeholder="Your Mailjet Secret Key" 
+                        value={sosConfig.mailjet_secret}
+                        onChange={e => setSosConfig({...sosConfig, mailjet_secret: e.target.value})}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="sos-thresh">Trigger Threshold (°C)</Label>
+                      <Input 
+                        id="sos-thresh" 
+                        type="number" 
+                        min="50" 
+                        max="110" 
+                        value={sosConfig.threshold}
+                        onChange={e => setSosConfig({...sosConfig, threshold: parseInt(e.target.value) || 90})}
+                      />
+                      <p className="text-xs text-muted-foreground">If any node crosses this temperature, the SOS will fire.</p>
+                    </div>
+                    <div className="flex gap-2 mt-4">
+                      <Button onClick={saveSosConfig} className="flex-1" variant="default">
+                        Save Alarm Configuration
+                      </Button>
+                      <Button onClick={() => setIsEditingSos(false)} className="flex-1" variant="outline">
+                        Cancel
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="space-y-3 mt-4 border-t pt-4">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Monitored Email</span>
+                      <span className="font-medium">{sosConfig.email || 'Not configured'}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Trigger Threshold</span>
+                      <span className="font-medium text-red-500">{sosConfig.threshold}°C</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">API Connection</span>
+                      <span className="font-medium text-green-500">Connected</span>
+                    </div>
+                    <Button onClick={testSosConfig} className="w-full mt-4" variant="destructive">
+                      Test Alarm
+                    </Button>
+                  </div>
+                )}
               </>
             )}
           </CardContent>
