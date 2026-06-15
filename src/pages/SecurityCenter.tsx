@@ -10,6 +10,7 @@ import { Shield, Activity, Lock, Fingerprint, TerminalSquare } from "lucide-reac
 export default function SecurityCenter() {
   const [status, setStatus] = useState<any>(null);
   const [traffic, setTraffic] = useState<any[]>([]);
+  const [nodes, setNodes] = useState<any[]>([]);
   const [blocked, setBlocked] = useState<string[]>([]);
   const [hashInput, setHashInput] = useState("");
   const [hashOutput, setHashOutput] = useState("");
@@ -22,7 +23,10 @@ export default function SecurityCenter() {
       setStatus(statRes);
       
       const trafRes = await fetchApi("/api/firewall/traffic");
-      setTraffic(trafRes.traffic);
+      setTraffic(trafRes.traffic || []);
+      
+      const nodeRes = await fetchApi("/api/firewall/nodes");
+      setNodes(nodeRes.nodes || []);
       
       const blkRes = await fetchApi("/api/firewall/blocked");
       setBlocked(blkRes.blocked_ips);
@@ -130,35 +134,63 @@ export default function SecurityCenter() {
         </Card>
 
         {/* Threat Management */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Lock className="h-5 w-5 text-red-500" /> Blocked IPs
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex gap-2">
-              <Input 
-                placeholder="IP Address..." 
-                value={blockInput}
-                onChange={(e) => setBlockInput(e.target.value)}
-              />
-              <Button variant="destructive" onClick={handleBlock}>Block</Button>
-            </div>
-            <div className="space-y-2 max-h-[300px] overflow-auto">
-              {blocked.length === 0 ? (
-                <div className="text-sm text-muted-foreground text-center py-4">No IPs blocked.</div>
-              ) : (
-                blocked.map(ip => (
-                  <div key={ip} className="flex items-center justify-between p-2 bg-muted/50 rounded-md border border-border">
-                    <span className="font-mono text-sm">{ip}</span>
-                    <Button variant="ghost" size="sm" onClick={() => handleUnblock(ip)} className="h-7 text-xs">Unblock</Button>
-                  </div>
-                ))
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="lg:col-span-1 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Lock className="h-5 w-5 text-red-500" /> Blocked IPs
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-2">
+                <Input 
+                  placeholder="IP Address..." 
+                  value={blockInput}
+                  onChange={(e) => setBlockInput(e.target.value)}
+                />
+                <Button variant="destructive" onClick={handleBlock}>Block</Button>
+              </div>
+              <div className="space-y-2 max-h-[200px] overflow-auto">
+                {blocked.length === 0 ? (
+                  <div className="text-sm text-muted-foreground text-center py-4">No IPs blocked.</div>
+                ) : (
+                  blocked.map(ip => (
+                    <div key={ip} className="flex items-center justify-between p-2 bg-muted/50 rounded-md border border-border">
+                      <span className="font-mono text-sm">{ip}</span>
+                      <Button variant="ghost" size="sm" onClick={() => handleUnblock(ip)} className="h-7 text-xs">Unblock</Button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-blue-500">
+                <Shield className="h-5 w-5" /> Trusted Cluster Nodes
+              </CardTitle>
+              <CardDescription>Known Swarm IPs bypassing restrictions.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 max-h-[150px] overflow-auto">
+                {nodes.length === 0 ? (
+                  <div className="text-sm text-muted-foreground text-center py-4">No Swarm nodes detected.</div>
+                ) : (
+                  nodes.map(n => (
+                    <div key={n.ip} className="flex items-center justify-between p-2 bg-blue-500/10 rounded-md border border-blue-500/20">
+                      <div>
+                        <div className="font-mono text-sm font-bold">{n.ip}</div>
+                        <div className="text-xs text-muted-foreground">{n.hostname} ({n.role})</div>
+                      </div>
+                      <Badge className="bg-blue-500 hover:bg-blue-600">TRUSTED</Badge>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Live Traffic */}
         <Card className="lg:col-span-2">
@@ -185,9 +217,12 @@ export default function SecurityCenter() {
                       <TableCell className="font-mono text-sm">{t.source_ip}</TableCell>
                       <TableCell className="text-sm">{t.target}</TableCell>
                       <TableCell>
-                        <Badge variant={t.action === "BLOCKED" ? "destructive" : "default"} className={t.action === "ALLOWED" ? "bg-green-500/20 text-green-500 hover:bg-green-500/30" : ""}>
-                          {t.action}
-                        </Badge>
+                        <div className="flex flex-col gap-1">
+                          <Badge variant={t.action === "BLOCKED" ? "destructive" : "default"} className={`w-fit ${t.action === "ALLOWED" ? "bg-green-500/20 text-green-500 hover:bg-green-500/30" : ""}`}>
+                            {t.action}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">{t.status}</span>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}

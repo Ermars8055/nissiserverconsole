@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 import random
 import time
+import psutil
 from typing import List
 
 from .ce256 import ce256_hash
@@ -44,30 +45,54 @@ def unblock_ip(req: BlockRequest):
         blocked_ips.remove(req.ip)
     return {"status": "success", "ip": req.ip}
 
+@router.get("/nodes")
+def get_trusted_nodes():
+    nodes = []
+    try:
+        import docker
+        client = docker.DockerClient(base_url='unix://var/run/docker.sock')
+        nodes_data = client.nodes.list()
+        for n in nodes_data:
+            ip = n.attrs.get("Status", {}).get("Addr")
+            if ip:
+                nodes.append({
+                    "hostname": n.attrs.get("Description", {}).get("Hostname"),
+                    "ip": ip,
+                    "role": n.attrs.get("Spec", {}).get("Role")
+                })
+    except Exception:
+        pass
+    return {"nodes": nodes}
+
 @router.get("/traffic")
 def get_live_traffic():
-    # Simulate some realistic live traffic hits
-    sources = ["10.0.0.5", "10.0.0.6", "192.168.0.12", "172.16.0.4", "45.33.22.11"]
-    targets = ["/api/system/report_data", "/api/docker/swarm/nodes", "/api/storage/list", "/"]
-    
-    if random.random() > 0.3: # 70% chance of new traffic
-        ip = random.choice(sources)
-        action = "BLOCKED" if ip in blocked_ips else "ALLOWED"
-        
-        log_entry = {
-            "id": int(time.time() * 1000) + random.randint(1, 1000),
-            "timestamp": time.strftime('%H:%M:%S'),
-            "source_ip": ip,
-            "target": random.choice(targets),
-            "action": action
-        }
-        live_traffic_log.insert(0, log_entry)
-        
-        # Keep only last 50
-        if len(live_traffic_log) > 50:
-            live_traffic_log.pop()
+    traffic = []
+    try:
+        conns = psutil.net_connections(kind='inet')
+        for c in conns:
+            if not c.raddr:
+                continue
+                
+            r_ip = c.raddr.ip
+            if r_ip == '127.0.0.1' or r_ip == '::1':
+                continue
+                
+            laddr = f"{c.laddr.ip}:{c.laddr.port}" if c.laddr else "Unknown"
             
-    return {"traffic": live_traffic_log}
+            action = "BLOCKED" if r_ip in blocked_ips else "ALLOWED"
+            
+            traffic.append({
+                "id": f"{r_ip}:{c.raddr.port}-{laddr}-{c.status}-{time.time()}",
+                "timestamp": time.strftime('%H:%M:%S'),
+                "source_ip": r_ip,
+                "target": laddr,
+                "action": action,
+                "status": c.status
+            })
+    except Exception as e:
+        print("Error fetching connections:", e)
+        
+    return {"traffic": traffic[:100]}
 
 @router.post("/hash")
 def hash_text(req: HashRequest):
