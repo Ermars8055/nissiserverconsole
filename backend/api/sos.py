@@ -41,8 +41,8 @@ async def save_config(config: SOSConfig):
     # If the user sends the masked password, ignore the password update
     current = load_config()
     data = config.dict()
-    if data["smtp_password"] == "********":
-        data["smtp_password"] = current.get("smtp_password", "")
+    if data["mailjet_secret"] == "********":
+        data["mailjet_secret"] = current.get("mailjet_secret", "")
         
     with open(CONFIG_FILE, "w") as f:
         json.dump(data, f)
