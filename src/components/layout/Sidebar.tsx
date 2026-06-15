@@ -18,7 +18,7 @@ export function Sidebar() {
     { name: "Images", href: "/docker/images", icon: HardDrive },
     { name: "Networks", href: "/docker/networks", icon: Network },
     { name: "Database Control Center", href: "/databases", icon: Database },
-    { name: "Storage", href: "/files", icon: Database },
+    { name: "Storage", href: "/storage", icon: Database },
     { name: "Terminal", href: "/terminal", icon: TerminalIcon },
     { name: "Logs", href: "/logs", icon: FileText },
     { name: "Users", href: "/users", icon: Users },
