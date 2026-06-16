@@ -42,6 +42,8 @@ async def wake_node(req: WakeRequest):
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         sock.sendto(data, ('255.255.255.255', 9))
+        sock.sendto(data, ('192.168.0.255', 9))
+        sock.sendto(data, ('192.168.1.255', 9))
         sock.close()
         
         return {"status": "success", "message": f"Wake-on-LAN magic packet sent to {req.mac_address}"}
