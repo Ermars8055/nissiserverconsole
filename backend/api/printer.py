@@ -40,7 +40,7 @@ async def print_document(filename: str, printer_name: str = None):
         file_path = safe_join(PRINT_DIR, filename)
         if not os.path.isfile(file_path):
             raise HTTPException(status_code=404, detail="File not found in Storage Vault")
-        cmd = ['lp']
+        cmd = ['lp', '-o', 'media=A4', '-o', 'fit-to-page']
         if printer_name:
             cmd.extend(['-d', printer_name])
         cmd.append(file_path)
