@@ -44,7 +44,7 @@ services:
     network_mode: "host"
     restart: always
     volumes:
-      - ~/.ssh:/root/.ssh:ro
+      - /home/nissi/.ssh:/root/.ssh:ro
 
 volumes:
   postgres_data:
