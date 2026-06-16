@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TerminalSquare, Server, Play } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import { Terminal as XTerm } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { fetchApi } from "@/lib/api";
@@ -19,8 +20,11 @@ interface SwarmNode {
 }
 
 export default function Terminal() {
+  const [searchParams] = useSearchParams();
+  const containerId = searchParams.get("containerId");
+  
   const [nodes, setNodes] = useState<SwarmNode[]>([]);
-  const [activeSessionName, setActiveSessionName] = useState("Main Server");
+  const [activeSessionName, setActiveSessionName] = useState(containerId ? `Container: ${containerId.substring(0, 12)}` : "Main Server");
   const [connectModalOpen, setConnectModalOpen] = useState(false);
   const [selectedNode, setSelectedNode] = useState<SwarmNode | null>(null);
   const [sshUser, setSshUser] = useState(localStorage.getItem('sshUsername') || "");
@@ -81,7 +85,9 @@ export default function Terminal() {
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     let wsUrl = `${wsProtocol}//${window.location.host}/api/terminal/ws`;
     
-    if (connectionParams) {
+    if (containerId) {
+      wsUrl += `?container_id=${encodeURIComponent(containerId)}`;
+    } else if (connectionParams) {
       wsUrl += `?target_ip=${encodeURIComponent(connectionParams.ip)}&ssh_user=${encodeURIComponent(connectionParams.user)}`;
     }
 
@@ -89,7 +95,9 @@ export default function Terminal() {
     
     ws.onopen = () => {
       term.writeln(`\x1b[32mConnected to ${activeSessionName}\x1b[0m`);
-      if (connectionParams && connectionParams.ip !== '127.0.0.1') {
+      if (containerId) {
+        term.writeln(`\x1b[36mInitializing docker exec interactive shell...\x1b[0m`);
+      } else if (connectionParams && connectionParams.ip !== '127.0.0.1') {
         term.writeln(`\x1b[36mInitializing native SSH tunnel to ${connectionParams.ip}...\x1b[0m`);
       }
       ws.send(JSON.stringify({ type: "resize", cols: term.cols, rows: term.rows }));

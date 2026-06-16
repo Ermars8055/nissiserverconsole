@@ -12,7 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Play, Square, RotateCw, Search, Box } from "lucide-react";
+import { Play, Square, RotateCw, Search, Box, TerminalSquare } from "lucide-react";
 
 export default function DockerDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -134,6 +134,13 @@ export default function DockerDashboard() {
                     <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => handleAction(container.id, 'restart')}>
                       <RotateCw className="h-4 w-4" />
                     </Button>
+                    {container.status === "running" && (
+                      <Link to={`/terminal?containerId=${container.id}`}>
+                        <Button variant="outline" size="icon" className="h-8 w-8 text-blue-500 hover:text-blue-600">
+                          <TerminalSquare className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                    )}
                   </TableCell>
                 </TableRow>
               ))

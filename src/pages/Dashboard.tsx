@@ -11,6 +11,7 @@ export default function Dashboard() {
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [nodes, setNodes] = useState<any[]>([]);
+  const [macInputs, setMacInputs] = useState<Record<string, string>>({});
 
   const handleShutdown = async (ip: string, hostname: string) => {
     if (confirm(`CRITICAL WARNING: Are you sure you want to completely power off ${hostname} (${ip})?`)) {
@@ -20,6 +21,23 @@ export default function Dashboard() {
       } catch (err) {
         alert(`Failed to shutdown ${hostname}`);
       }
+    }
+  };
+
+  const handleWake = async (hostname: string) => {
+    const mac = macInputs[hostname];
+    if (!mac) {
+      alert(`Please enter the MAC address for ${hostname} to send a Wake-on-LAN packet.`);
+      return;
+    }
+    try {
+      await fetchApi("/api/power/wake", {
+        method: "POST",
+        body: JSON.stringify({ mac_address: mac })
+      });
+      alert(`Magic Packet sent! ${hostname} should be waking up.`);
+    } catch (err) {
+      alert(`Failed to send Wake-on-LAN packet to ${hostname}`);
     }
   };
 
@@ -184,27 +202,40 @@ export default function Dashboard() {
               <CardDescription>Issue physical shutdown commands to Swarm nodes to prevent combustion.</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {nodes.map(n => (
-                  <div key={n.id} className="flex items-center justify-between p-3 border rounded-md">
-                    <div>
-                      <div className="font-bold text-sm">{n.hostname}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {n.ip || 'Local'} ({n.role}) 
-                        {n.hardware?.temperature && (
-                          <span className={`ml-2 font-bold ${n.hardware.temperature > 80 ? 'text-red-500' : 'text-orange-500'}`}>
-                            {n.hardware.temperature}°C
-                          </span>
-                        )}
+                  <div key={n.id} className="flex flex-col p-3 border rounded-md gap-3 bg-card/50">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="font-bold text-sm">{n.hostname}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {n.ip || 'Local'} ({n.role}) 
+                          {n.hardware?.temperature && (
+                            <span className={`ml-2 font-bold ${n.hardware.temperature > 80 ? 'text-red-500' : 'text-orange-500'}`}>
+                              {n.hardware.temperature}°C
+                            </span>
+                          )}
+                        </div>
                       </div>
+                      <Button 
+                        variant="destructive" 
+                        size="sm"
+                        onClick={() => handleShutdown(n.ip || '127.0.0.1', n.hostname)}
+                      >
+                        KILL POWER
+                      </Button>
                     </div>
-                    <Button 
-                      variant="destructive" 
-                      size="sm"
-                      onClick={() => handleShutdown(n.ip || '127.0.0.1', n.hostname)}
-                    >
-                      KILL POWER
-                    </Button>
+                    <div className="flex gap-2 items-center border-t border-border/50 pt-2">
+                      <Input 
+                        placeholder="MAC Address (e.g. 00:1A:2B...)" 
+                        value={macInputs[n.hostname] || ""}
+                        onChange={e => setMacInputs(prev => ({...prev, [n.hostname]: e.target.value}))}
+                        className="font-mono text-xs h-8"
+                      />
+                      <Button variant="outline" size="sm" className="h-8" onClick={() => handleWake(n.hostname)}>
+                        Wake
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>

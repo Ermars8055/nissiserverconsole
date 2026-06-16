@@ -10,7 +10,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 router = APIRouter()
 
 @router.websocket("/ws")
-async def terminal_websocket(websocket: WebSocket, target_ip: str = None, ssh_user: str = None):
+async def terminal_websocket(websocket: WebSocket, target_ip: str = None, ssh_user: str = None, container_id: str = None):
     await websocket.accept()
     
     try:
@@ -19,7 +19,10 @@ async def terminal_websocket(websocket: WebSocket, target_ip: str = None, ssh_us
             env = os.environ.copy()
             env['TERM'] = 'xterm-256color'
             
-            if target_ip and ssh_user and target_ip != "local" and target_ip != "127.0.0.1":
+            if container_id:
+                # Interactive docker exec shell
+                os.execve('/usr/bin/docker', ['/usr/bin/docker', 'exec', '-it', container_id, '/bin/sh'], env)
+            elif target_ip and ssh_user and target_ip != "local" and target_ip != "127.0.0.1":
                 # Launch SSH client
                 # Using StrictHostKeyChecking=no makes it seamless for internal swarm nodes
                 os.execve('/usr/bin/ssh', ['/usr/bin/ssh', '-o', 'StrictHostKeyChecking=no', f"{ssh_user}@{target_ip}"], env)
