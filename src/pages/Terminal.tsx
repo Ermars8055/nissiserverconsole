@@ -172,7 +172,22 @@ export default function Terminal() {
         </div>
 
         <div className="mt-4">
-          <h3 className="text-sm font-medium mb-3 text-muted-foreground">Swarm Nodes</h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-medium text-muted-foreground">Swarm Nodes</h3>
+            {sshUser && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-6 px-2 text-xs" 
+                onClick={() => {
+                  localStorage.removeItem('sshUsername');
+                  setSshUser("");
+                }}
+              >
+                Change User
+              </Button>
+            )}
+          </div>
           <div className="space-y-2">
             {nodes.length === 0 ? (
               <div className="text-sm text-muted-foreground p-2 text-center">Loading nodes...</div>
