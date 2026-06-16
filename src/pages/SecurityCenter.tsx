@@ -5,13 +5,16 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Shield, Activity, Lock, Fingerprint, TerminalSquare } from "lucide-react";
+import { Shield, Activity, Lock, Fingerprint, TerminalSquare, AlertTriangle, Crosshair } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
 export default function SecurityCenter() {
   const [status, setStatus] = useState<any>(null);
   const [traffic, setTraffic] = useState<any[]>([]);
   const [nodes, setNodes] = useState<any[]>([]);
   const [blocked, setBlocked] = useState<string[]>([]);
+  const [metrics, setMetrics] = useState<any[]>([]);
+  const [sshLogs, setSshLogs] = useState<any[]>([]);
   const [hashInput, setHashInput] = useState("");
   const [hashOutput, setHashOutput] = useState("");
   const [isHashing, setIsHashing] = useState(false);
@@ -30,6 +33,12 @@ export default function SecurityCenter() {
       
       const blkRes = await fetchApi("/api/firewall/blocked");
       setBlocked(blkRes.blocked_ips);
+      
+      const metRes = await fetchApi("/api/firewall/metrics");
+      setMetrics(prev => [...prev.slice(-19), metRes]);
+      
+      const sshRes = await fetchApi("/api/firewall/ssh-logs");
+      setSshLogs(sshRes.logs || []);
     } catch (e) {
       console.error(e);
     }
@@ -79,6 +88,18 @@ export default function SecurityCenter() {
       loadData();
     } catch (e) {
       alert("Failed to unblock IP");
+    }
+  };
+
+  const handleBlockSpecific = async (ip: string) => {
+    try {
+      await fetchApi("/api/firewall/block", {
+        method: "POST",
+        body: JSON.stringify({ ip })
+      });
+      loadData();
+    } catch (e) {
+      alert("Failed to block IP");
     }
   };
 
@@ -199,7 +220,20 @@ export default function SecurityCenter() {
               <TerminalSquare className="h-5 w-5 text-green-500" /> Live Network Monitor
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
+            
+            {/* Live Metrics Graph */}
+            <div className="h-48 w-full bg-black/20 rounded-md border p-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={metrics}>
+                  <XAxis dataKey="timestamp" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                  <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '8px' }} />
+                  <Line type="monotone" dataKey="active_connections" stroke="#22c55e" strokeWidth={2} dot={false} isAnimationActive={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+            
             <div className="rounded-md border h-[350px] overflow-auto bg-black/20">
               <Table>
                 <TableHeader className="sticky top-0 bg-card/95 backdrop-blur z-10 shadow-sm">
@@ -229,6 +263,55 @@ export default function SecurityCenter() {
                   {traffic.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">Listening for traffic...</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+        
+        {/* SSH Audit Logs */}
+        <Card className="lg:col-span-3">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-orange-500">
+              <AlertTriangle className="h-5 w-5" /> SSH Audit Logs (Failed Attempts)
+            </CardTitle>
+            <CardDescription>Monitor brute-force SSH attacks and instantly ban malicious IPs at the firewall level.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-md border h-[300px] overflow-auto">
+              <Table>
+                <TableHeader className="sticky top-0 bg-card/95 backdrop-blur z-10 shadow-sm">
+                  <TableRow>
+                    <TableHead>Time</TableHead>
+                    <TableHead>Attacker IP</TableHead>
+                    <TableHead>Target User</TableHead>
+                    <TableHead>Message</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sshLogs.map((log) => (
+                    <TableRow key={log.id} className={blocked.includes(log.ip) ? "opacity-50" : ""}>
+                      <TableCell className="font-mono text-xs text-muted-foreground">{log.timestamp}</TableCell>
+                      <TableCell className="font-mono font-medium text-red-400">{log.ip}</TableCell>
+                      <TableCell className="font-mono text-sm">{log.user}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground max-w-xs truncate" title={log.message}>{log.message}</TableCell>
+                      <TableCell className="text-right">
+                        {blocked.includes(log.ip) ? (
+                          <Badge variant="destructive">Banned</Badge>
+                        ) : (
+                          <Button variant="destructive" size="sm" onClick={() => handleBlockSpecific(log.ip)} className="h-7 text-xs">
+                            <Crosshair className="h-3 w-3 mr-1" /> Ban IP
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {sshLogs.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No failed SSH attempts detected.</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
