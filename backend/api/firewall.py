@@ -34,6 +34,15 @@ class BlockRequest(BaseModel):
 class HashRequest(BaseModel):
     text: str
 
+class IngestLogRequest(BaseModel):
+    timestamp: str
+    ip: str
+    user: str
+    message: str
+    node: str
+
+cluster_ssh_logs = []
+
 @router.get("/status")
 def get_firewall_status():
     blocks = get_iptables_blocks()
@@ -122,6 +131,21 @@ def hash_text(req: HashRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.post("/ingest")
+def ingest_ssh_log(req: IngestLogRequest):
+    cluster_ssh_logs.append({
+        "id": f"{req.timestamp}-{req.ip}-{len(cluster_ssh_logs)}",
+        "timestamp": req.timestamp,
+        "ip": req.ip,
+        "user": req.user,
+        "message": req.message,
+        "node": req.node
+    })
+    # Keep list reasonably sized
+    if len(cluster_ssh_logs) > 500:
+        cluster_ssh_logs.pop(0)
+    return {"status": "success"}
+
 @router.get("/ssh-logs")
 def get_ssh_logs():
     try:
@@ -134,10 +158,11 @@ def get_ssh_logs():
             res = subprocess.run(['journalctl', '-u', 'ssh', '-n', '500', '--no-pager'], capture_output=True, text=True)
             log_lines = res.stdout.splitlines()
             
-        logs = []
+        local_logs = []
         for line in log_lines:
             if "Failed password" in line or "Invalid user" in line or "Disconnected from invalid user" in line:
                 parts = line.split()
+                if len(parts) < 4: continue
                 timestamp = " ".join(parts[:3])
                 ip = ""
                 user = ""
@@ -163,14 +188,22 @@ def get_ssh_logs():
 
                 if ip and ip != "127.0.0.1":
                     msg = line.split("sshd", 1)[-1].split(":", 1)[-1].strip() if "sshd" in line else line
-                    logs.append({
-                        "id": f"{timestamp}-{ip}-{len(logs)}",
+                    local_logs.append({
+                        "id": f"{timestamp}-{ip}-local-{len(local_logs)}",
                         "timestamp": timestamp,
                         "ip": ip,
                         "user": user or "Unknown",
-                        "message": msg
+                        "message": msg,
+                        "node": "thematrix"
                     })
-        return {"logs": list(reversed(logs))[:50]}
+        
+        # Merge local logs and cluster logs
+        all_logs = local_logs + cluster_ssh_logs
+        
+        # We should sort them, but string timestamps like "Jun 16 12:00:00" are tricky. 
+        # For now, just reverse the combined list to show newest first.
+        # Ideally, we sort by parsing the timestamp, but we'll reverse all_logs.
+        return {"logs": list(reversed(all_logs))[:50]}
     except Exception as e:
         print("SSH Log error:", e)
         return {"logs": []}

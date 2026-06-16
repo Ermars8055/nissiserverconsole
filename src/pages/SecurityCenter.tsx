@@ -285,6 +285,7 @@ export default function SecurityCenter() {
                 <TableHeader className="sticky top-0 bg-card/95 backdrop-blur z-10 shadow-sm">
                   <TableRow>
                     <TableHead>Time</TableHead>
+                    <TableHead>Node</TableHead>
                     <TableHead>Attacker IP</TableHead>
                     <TableHead>Target User</TableHead>
                     <TableHead>Message</TableHead>
@@ -295,6 +296,11 @@ export default function SecurityCenter() {
                   {sshLogs.map((log) => (
                     <TableRow key={log.id} className={blocked.includes(log.ip) ? "opacity-50" : ""}>
                       <TableCell className="font-mono text-xs text-muted-foreground">{log.timestamp}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-xs bg-black/40">
+                          {log.node || 'Unknown'}
+                        </Badge>
+                      </TableCell>
                       <TableCell className="font-mono font-medium text-red-400">{log.ip}</TableCell>
                       <TableCell className="font-mono text-sm">{log.user}</TableCell>
                       <TableCell className="text-xs text-muted-foreground max-w-xs truncate" title={log.message}>{log.message}</TableCell>
@@ -311,7 +317,7 @@ export default function SecurityCenter() {
                   ))}
                   {sshLogs.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No failed SSH attempts detected.</TableCell>
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No failed SSH attempts detected across the cluster.</TableCell>
                     </TableRow>
                   )}
                 </TableBody>

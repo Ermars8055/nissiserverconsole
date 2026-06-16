@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  agent:
+    build: ./sentinel
+    image: nissigrid/sentinel:latest
+    environment:
+      - NISSI_API_URL=http://thematrix:8000/api/firewall/ingest
+      - NODE_HOSTNAME={{.Node.Hostname}}
+    volumes:
+      - /var/log/auth.log:/host/var/log/auth.log:ro
+    deploy:
+      mode: global
+      restart_policy:
+        condition: any
+    extra_hosts:
+      - "thematrix:host-gateway"
