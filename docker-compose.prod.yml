@@ -38,5 +38,13 @@ services:
       - "3030:3000"
       - "222:22"
 
+  tunnel:
+    build: ./tunnel
+    container_name: server_admin_tunnel
+    network_mode: "host"
+    restart: always
+    volumes:
+      - ~/.ssh:/root/.ssh:ro
+
 volumes:
   postgres_data:
