@@ -196,9 +196,8 @@ export default function Dashboard() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        {nodes.length > 0 && (
-          <Card className="col-span-7 border-destructive/20 border-2">
-            <CardHeader className="pb-2">
+        <Card className="col-span-7 border-destructive/20 border-2">
+          <CardHeader className="pb-2">
               <CardTitle className="text-red-500 flex items-center gap-2"><Power className="h-5 w-5"/> Emergency Power Controls</CardTitle>
               <CardDescription>Issue physical shutdown commands to Swarm nodes to prevent combustion.</CardDescription>
             </CardHeader>
@@ -240,9 +239,11 @@ export default function Dashboard() {
                   </div>
                 ))}
               </div>
+              {nodes.length === 0 && (
+                <div className="text-center text-muted-foreground py-4">Loading cluster nodes or no Swarm detected...</div>
+              )}
             </CardContent>
           </Card>
-        )}
 
         <Card className="col-span-4">
           <CardHeader>
