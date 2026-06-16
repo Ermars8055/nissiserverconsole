@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { fetchApi } from "@/lib/api";
 import { Activity, HardDrive, Server, Users, Power } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
@@ -229,7 +230,7 @@ export default function Dashboard() {
                       <Input 
                         placeholder="MAC Address (e.g. 00:1A:2B...)" 
                         value={macInputs[n.hostname] || ""}
-                        onChange={e => setMacInputs(prev => ({...prev, [n.hostname]: e.target.value}))}
+                        onChange={(e: any) => setMacInputs(prev => ({...prev, [n.hostname]: e.target.value}))}
                         className="font-mono text-xs h-8"
                       />
                       <Button variant="outline" size="sm" className="h-8" onClick={() => handleWake(n.hostname)}>
