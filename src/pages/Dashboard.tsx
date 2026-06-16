@@ -17,10 +17,11 @@ export default function Dashboard() {
   const handleShutdown = async (ip: string, hostname: string) => {
     if (confirm(`CRITICAL WARNING: Are you sure you want to completely power off ${hostname} (${ip})?`)) {
       try {
-        await fetchApi(`/api/power/shutdown/${encodeURIComponent(ip)}`, { method: 'POST' });
+        const sshUser = localStorage.getItem('sshUsername') || 'root';
+        await fetchApi(`/api/power/shutdown/${encodeURIComponent(ip)}?user=${encodeURIComponent(sshUser)}`, { method: 'POST' });
         alert(`Shutdown signal sent to ${hostname}`);
-      } catch (err) {
-        alert(`Failed to shutdown ${hostname}`);
+      } catch (err: any) {
+        alert(`Failed to shutdown ${hostname}. Error: ${err.message || "Ensure passwordless SSH is configured."}`);
       }
     }
   };

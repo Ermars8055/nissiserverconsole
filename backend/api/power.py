@@ -10,7 +10,7 @@ class WakeRequest(BaseModel):
 router = APIRouter()
 
 @router.post("/shutdown/{node_ip}")
-async def shutdown_node(node_ip: str):
+async def shutdown_node(node_ip: str, user: str = "root"):
     if node_ip == "127.0.0.1" or node_ip == "local":
         # Shutdown the leader itself!
         try:
@@ -20,9 +20,10 @@ async def shutdown_node(node_ip: str):
             raise HTTPException(status_code=500, detail=str(e))
     else:
         # Shutdown remote worker over SSH
-        # Requires the manager to have passwordless SSH access to the worker
         try:
-            subprocess.Popen(['/usr/bin/ssh', '-o', 'StrictHostKeyChecking=no', f"root@{node_ip}", 'shutdown -h now'])
+            result = subprocess.run(['/usr/bin/ssh', '-o', 'StrictHostKeyChecking=no', f"{user}@{node_ip}", 'sudo shutdown -h now'], capture_output=True, text=True)
+            if result.returncode != 0:
+                raise Exception(f"SSH Failed: {result.stderr}")
             return {"status": "success", "message": f"Shutdown signal sent to {node_ip}."}
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
