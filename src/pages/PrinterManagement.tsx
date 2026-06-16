@@ -348,7 +348,7 @@ export default function PrinterManagement() {
                     {file.name}
                   </TableCell>
                   <TableCell>{(file.size / 1024).toFixed(1)} KB</TableCell>
-                  <TableCell>{new Date(file.modified * 1000).toLocaleString()}</TableCell>
+                  <TableCell>{new Date(file.modified).toLocaleString()}</TableCell>
                   <TableCell className="text-right space-x-2">
                     <Button variant="outline" size="sm" onClick={() => handleFileAction(file.name, 'print')}>
                       <PrinterIcon className="mr-2 h-3 w-3" /> Print
