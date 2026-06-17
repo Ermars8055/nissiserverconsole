@@ -5,12 +5,25 @@ import asyncio
 import struct
 import fcntl
 import termios
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from database import get_db
+from api.auth import get_current_user
 
 router = APIRouter()
 
 @router.websocket("/ws")
-async def terminal_websocket(websocket: WebSocket, target_ip: str = None, ssh_user: str = None, container_id: str = None):
+async def terminal_websocket(websocket: WebSocket, token: str = None, target_ip: str = None, ssh_user: str = None, container_id: str = None, db: AsyncSession = Depends(get_db)):
+    if not token:
+        await websocket.close(code=1008, reason="Missing authentication token")
+        return
+    
+    try:
+        user = await get_current_user(token=token, db=db)
+    except Exception as e:
+        await websocket.close(code=1008, reason="Invalid authentication token")
+        return
+
     await websocket.accept()
     
     try:

@@ -100,7 +100,7 @@ def send_sos_email(config, hostname, temp, ip):
 app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 app.include_router(system.router, prefix="/api/system", tags=["System Monitoring"], dependencies=[Depends(get_current_user)])
 app.include_router(docker_api.router, prefix="/api/docker", tags=["Docker Management"], dependencies=[Depends(get_current_user)])
-app.include_router(terminal.router, prefix="/api/terminal", tags=["Terminal Service"], dependencies=[Depends(get_current_user)])
+app.include_router(terminal.router, prefix="/api/terminal", tags=["Terminal Service"])
 app.include_router(files.router, prefix="/api/files", tags=["File Manager"], dependencies=[Depends(get_current_user)])
 app.include_router(ssh.router, prefix="/api/ssh", tags=["SSH Management"], dependencies=[Depends(get_current_user)])
 app.include_router(printer.router, prefix="/api/printer", tags=["Printer Management"], dependencies=[Depends(get_current_user)])

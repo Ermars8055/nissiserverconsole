@@ -83,12 +83,13 @@ export default function Terminal() {
 
     // Connect WebSocket
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    let wsUrl = `${wsProtocol}//${window.location.host}/api/terminal/ws`;
+    const token = localStorage.getItem('token');
+    let wsUrl = `${wsProtocol}//${window.location.host}/api/terminal/ws?token=${token || ''}`;
     
     if (containerId) {
-      wsUrl += `?container_id=${encodeURIComponent(containerId)}`;
+      wsUrl += `&container_id=${encodeURIComponent(containerId)}`;
     } else if (connectionParams) {
-      wsUrl += `?target_ip=${encodeURIComponent(connectionParams.ip)}&ssh_user=${encodeURIComponent(connectionParams.user)}`;
+      wsUrl += `&target_ip=${encodeURIComponent(connectionParams.ip)}&ssh_user=${encodeURIComponent(connectionParams.user)}`;
     }
 
     const ws = new WebSocket(wsUrl);
