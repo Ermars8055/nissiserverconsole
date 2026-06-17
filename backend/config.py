@@ -2,16 +2,16 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Server Admin API"
-    SECRET_KEY: str = "your-super-secret-key-change-in-production"
+    SECRET_KEY: str = "fallback-secret-key-do-not-use-in-prod"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
     # Database
-    POSTGRES_USER: str = "admin"
-    POSTGRES_PASSWORD: str = "adminpassword"
+    POSTGRES_USER: str = "postgres"
+    POSTGRES_PASSWORD: str = "postgres"
     POSTGRES_SERVER: str = "localhost"
     POSTGRES_PORT: str = "5432"
-    POSTGRES_DB: str = "server_admin"
+    POSTGRES_DB: str = "postgres"
 
     @property
     def DATABASE_URL(self) -> str:

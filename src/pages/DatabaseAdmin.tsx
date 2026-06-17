@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { fetchApi } from '@/lib/api';
 
 interface QueryResult {
   columns: string[];
@@ -28,12 +29,7 @@ const DatabaseAdmin: React.FC = () => {
 
   const fetchTables = async () => {
     try {
-      const res = await fetch('/api/database/tables');
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail || "Failed to fetch tables");
-      }
-      const data = await res.json();
+      const data = await fetchApi('/api/database/tables');
       setTables(data.tables);
     } catch (err: any) {
       setError(err.message || "Failed to fetch tables");
@@ -45,12 +41,7 @@ const DatabaseAdmin: React.FC = () => {
     setError(null);
     setSelectedTable(tableName);
     try {
-      const res = await fetch(`/api/database/table/${tableName}`);
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail || "Failed to load table data");
-      }
-      const data = await res.json();
+      const data = await fetchApi(`/api/database/table/${tableName}`);
       setQueryResult({
         columns: data.columns,
         rows: data.rows,
@@ -70,16 +61,10 @@ const DatabaseAdmin: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/database/query', {
+      const data = await fetchApi('/api/database/query', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: rawSql })
       });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail || "SQL Execution Error");
-      }
-      const data = await res.json();
       setQueryResult(data);
     } catch (err: any) {
       setError(err.message || "SQL Execution Error");

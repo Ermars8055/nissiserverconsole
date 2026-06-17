@@ -1,7 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base
 from api import auth, system, docker_api, terminal, files, ssh, printer, audit, storage, sos, power, firewall, database_admin
+from api.auth import get_current_user
 from config import settings
 
 app = FastAPI(title=settings.PROJECT_NAME)
@@ -9,7 +10,14 @@ app = FastAPI(title=settings.PROJECT_NAME)
 # Set up CORS for the React frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Should be restricted in production
+    allow_origins=[
+        "http://localhost:5173", 
+        "http://127.0.0.1:5173",
+        "http://localhost",
+        "http://127.0.0.1",
+        "http://nissiconsole.ermarscastar.in",
+        "https://nissiconsole.ermarscastar.in"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -90,18 +98,18 @@ def send_sos_email(config, hostname, temp, ip):
 
 # Include Routers
 app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
-app.include_router(system.router, prefix="/api/system", tags=["System Monitoring"])
-app.include_router(docker_api.router, prefix="/api/docker", tags=["Docker Management"])
-app.include_router(terminal.router, prefix="/api/terminal", tags=["Terminal Service"])
-app.include_router(files.router, prefix="/api/files", tags=["File Manager"])
-app.include_router(ssh.router, prefix="/api/ssh", tags=["SSH Management"])
-app.include_router(printer.router, prefix="/api/printer", tags=["Printer Management"])
-app.include_router(audit.router, prefix="/api/audit", tags=["Audit Logs"])
-app.include_router(database_admin.router, prefix="/api/database", tags=["Database Management"])
-app.include_router(storage.router, prefix="/api/storage", tags=["Storage Management"])
-app.include_router(sos.router, prefix="/api/sos", tags=["SOS Configuration"])
-app.include_router(firewall.router, prefix="/api/firewall", tags=["Firewall Management"])
-app.include_router(power.router, prefix="/api/power", tags=["Power Controls"])
+app.include_router(system.router, prefix="/api/system", tags=["System Monitoring"], dependencies=[Depends(get_current_user)])
+app.include_router(docker_api.router, prefix="/api/docker", tags=["Docker Management"], dependencies=[Depends(get_current_user)])
+app.include_router(terminal.router, prefix="/api/terminal", tags=["Terminal Service"], dependencies=[Depends(get_current_user)])
+app.include_router(files.router, prefix="/api/files", tags=["File Manager"], dependencies=[Depends(get_current_user)])
+app.include_router(ssh.router, prefix="/api/ssh", tags=["SSH Management"], dependencies=[Depends(get_current_user)])
+app.include_router(printer.router, prefix="/api/printer", tags=["Printer Management"], dependencies=[Depends(get_current_user)])
+app.include_router(audit.router, prefix="/api/audit", tags=["Audit Logs"], dependencies=[Depends(get_current_user)])
+app.include_router(database_admin.router, prefix="/api/database", tags=["Database Management"], dependencies=[Depends(get_current_user)])
+app.include_router(storage.router, prefix="/api/storage", tags=["Storage Management"], dependencies=[Depends(get_current_user)])
+app.include_router(sos.router, prefix="/api/sos", tags=["SOS Configuration"], dependencies=[Depends(get_current_user)])
+app.include_router(firewall.router, prefix="/api/firewall", tags=["Firewall Management"], dependencies=[Depends(get_current_user)])
+app.include_router(power.router, prefix="/api/power", tags=["Power Controls"], dependencies=[Depends(get_current_user)])
 
 @app.get("/")
 def read_root():
