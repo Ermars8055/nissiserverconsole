@@ -20,6 +20,7 @@ import GitServer from "./pages/GitServer";
 import SecurityCenter from "./pages/SecurityCenter";
 import Login from "./pages/Login";
 import PlaceholderPage from "./pages/PlaceholderPage";
+import DatabaseAdmin from './pages/DatabaseAdmin';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -65,6 +66,7 @@ function App() {
               <Route path="/report" element={<Report />} />
               <Route path="/git-server" element={<GitServer />} />
               <Route path="/security" element={<SecurityCenter />} />
+              <Route path="/database" element={<DatabaseAdmin />} />
             </Route>
           </Routes>
         </BrowserRouter>

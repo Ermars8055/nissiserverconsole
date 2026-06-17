@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base
-from api import auth, system, docker_api, terminal, files, ssh, printer, audit, storage, sos, power, firewall
+from api import auth, system, docker_api, terminal, files, ssh, printer, audit, storage, sos, power, firewall, database_admin
 from config import settings
 
 app = FastAPI(title=settings.PROJECT_NAME)
@@ -97,6 +97,7 @@ app.include_router(files.router, prefix="/api/files", tags=["File Manager"])
 app.include_router(ssh.router, prefix="/api/ssh", tags=["SSH Management"])
 app.include_router(printer.router, prefix="/api/printer", tags=["Printer Management"])
 app.include_router(audit.router, prefix="/api/audit", tags=["Audit Logs"])
+app.include_router(database_admin.router, prefix="/api/database", tags=["Database Management"])
 app.include_router(storage.router, prefix="/api/storage", tags=["Storage Management"])
 app.include_router(sos.router, prefix="/api/sos", tags=["SOS Configuration"])
 app.include_router(firewall.router, prefix="/api/firewall", tags=["Firewall Management"])

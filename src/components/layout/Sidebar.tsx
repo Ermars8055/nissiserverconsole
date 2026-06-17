@@ -28,6 +28,7 @@ export function Sidebar() {
     { name: "Users", href: "/users", icon: Users },
     { name: "Global Report", href: "/report", icon: BarChart },
     { name: "Advanced Firewall", href: "/security", icon: Shield },
+    { name: "Database Admin", href: "/database", icon: Database },
     { name: "Settings", href: "/settings", icon: Settings },
   ];
 
